@@ -1,0 +1,451 @@
+:root {
+  --primary-blue: #0555c8;
+  --light-blue-1: #ecf9ff;
+  --light-blue-2: #d5f0ff;
+  --soft-bg: #f6f6f6;
+  --white: #ffffff;
+  --secondary-orange: #f89a53; /* Softened orange tone */
+  --medium-blue: #3c71b6;
+  --border-color: #e7e7e7;
+  --text-primary: #222222;
+  --text-secondary: #666666;
+  --success-green: #34a853;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--soft-bg);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Base Layout Classes */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.calc-wrapper {
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.calc-header {
+  padding: 2rem 2rem 0;
+  text-align: center;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.header-logo {
+  height: 80px; /* Big logo as requested */
+  display: block;
+}
+
+.calc-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Tabs */
+.tabs-container {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  margin-top: 1.5rem;
+  padding: 0 2rem;
+  gap: 2rem;
+}
+
+.tab {
+  padding: 1rem 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-secondary);
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.tab:hover {
+  color: var(--primary-blue);
+}
+
+.tab.active {
+  color: var(--primary-blue);
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-blue);
+  border-radius: 3px 3px 0 0;
+}
+
+/* Grid Layout for App */
+.grid-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  min-height: 600px;
+}
+
+@media (max-width: 992px) {
+  .grid-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Left Column */
+.sidebar {
+  padding: 2rem;
+  border-right: 1px solid var(--border-color);
+  background: var(--white);
+}
+
+.slider-group {
+  margin-bottom: 2rem;
+}
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.slider-value {
+  color: var(--primary-blue);
+  background: var(--light-blue-1);
+  padding: 0.1rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* Custom Range Slider Range Base */
+input[type=range] {
+  appearance: none;
+  -webkit-appearance: none; 
+  width: 100%; 
+  background: transparent; 
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+}
+
+input[type=range]:focus {
+  outline: none; 
+}
+
+/* The slider track */
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: var(--light-blue-2);
+  border-radius: 10px;
+}
+
+/* The thumb */
+input[type=range]::-webkit-slider-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--primary-blue);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -7px; 
+  box-shadow: 0 2px 5px rgba(5, 85, 200, 0.4);
+  transition: transform 0.1s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* Right Column */
+.main-content {
+  padding: .5rem;
+  background: var(--soft-bg);
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+/* Card / Chart Area */
+.chart-card {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+.chart-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem; /* Exta space for Y-axis top labels if needed */
+}
+
+.chart-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-icon {
+  color: var(--text-secondary);
+  cursor: help;
+  position: relative;
+}
+
+.info-tooltip {
+  visibility: hidden;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  width: 250px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  margin-top: 8px;
+}
+
+.info-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: #333;
+}
+
+.info-icon:hover .info-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+/* CSS Bar Chart */
+.chart-wrapper {
+  position: relative;
+  display: flex;
+  margin-left: 50px; /* Space for Y-Axis labels */
+}
+
+.y-axis {
+  position: absolute;
+  left: -50px;
+  top: 0;
+  bottom: 1rem;
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding-right: 10px;
+}
+
+.y-axis-grid-lines {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.grid-line {
+  border-bottom: 1px dashed var(--border-color);
+  width: 100%;
+  height: 0;
+}
+
+.bar-chart-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 220px;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--text-secondary);
+  position: relative;
+  flex: 1;
+  z-index: 1;
+}
+
+.chart-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 100%;
+  position: relative;
+  width: 25%;
+  justify-content: center;
+}
+
+.bar {
+  width: 40px;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.5s ease-out;
+  position: relative;
+}
+
+.bar-skillbrew {
+  background: var(--light-blue-2);
+  border: 1px solid var(--medium-blue);
+}
+
+.bar-current {
+  background: var(--secondary-orange);
+}
+
+.bar-value {
+  position: absolute;
+  top: -25px;
+  width: 100%;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.chart-label {
+  position: absolute;
+  bottom: -30px;
+  width: 100%;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* Bottom Tickets Grid */
+.tickets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .5rem;
+}
+
+.ticket-card {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  transition: transform 0.2s;
+}
+
+.ticket-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(5, 85, 200, 0.08);
+  border-color: var(--light-blue-2);
+}
+
+.ticket-icon-wrapper {
+  background: var(--light-blue-1);
+  color: var(--primary-blue);
+  padding: 0.75rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ticket-content {
+  flex: 1;
+}
+
+.ticket-title {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.ticket-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.ticket-value.green {
+  color: var(--success-green);
+}
+.ticket-value.blue {
+  color: var(--primary-blue);
+}
+
+@media (max-width: 768px) {
+  .tickets-grid {
+    grid-template-columns: 1fr;
+  }
+}
