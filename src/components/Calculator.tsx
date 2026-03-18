@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { ForStaffing } from './ForStaffing';
+import { ForCorporates } from './forcorporates';
+import { ForStartups } from './forstartups';
 import logo from '../Skillbrew Logo.svg';
 
 type Tab = 'staffing' | 'corporates' | 'startups';
@@ -41,16 +43,8 @@ export const Calculator: React.FC = () => {
 
         <main>
           {activeTab === 'staffing' && <ForStaffing />}
-          {activeTab === 'corporates' && (
-            <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              Corporate calculator coming soon.
-            </div>
-          )}
-          {activeTab === 'startups' && (
-            <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              Startup calculator coming soon.
-            </div>
-          )}
+          {activeTab === 'corporates' && <ForCorporates />}
+          {activeTab === 'startups' && <ForStartups />}
         </main>
       </div>
     </div>

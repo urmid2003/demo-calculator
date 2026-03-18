@@ -449,3 +449,141 @@ input[type=range]::-webkit-slider-thumb:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── Hero Savings Card ─── */
+.savings-hero-card {
+  background: linear-gradient(135deg, #0555c8 0%, #1a73e8 50%, #4a9eff 100%);
+  border-radius: 12px;
+  padding: 2rem;
+  color: #ffffff;
+  box-shadow: 0 8px 32px rgba(5, 85, 200, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.savings-hero-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.savings-hero-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.savings-hero-left {
+  flex: 1;
+}
+
+.savings-hero-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.savings-hero-label .info-icon {
+  color: rgba(255,255,255,0.7);
+}
+
+.savings-hero-label .info-tooltip {
+  color: #222;
+  background: #fff;
+}
+
+.savings-hero-label .info-tooltip::before {
+  background: #fff;
+}
+
+.savings-hero-amount {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+.savings-hero-sub {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.savings-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.savings-percent-ring {
+  position: relative;
+  width: 110px;
+  height: 110px;
+}
+
+.percent-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.percent-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.savings-percent-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.85;
+  text-align: center;
+}
+
+/* Ticket subtitle */
+.ticket-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  margin-top: 0.15rem;
+}
+
+/* Startup Hero Card — warm gradient variant */
+.savings-hero-startup {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.25);
+}
+
+.savings-hero-startup::before {
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+}
+
+@media (max-width: 600px) {
+  .savings-hero-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+  .savings-hero-amount {
+    font-size: 2rem;
+  }
+  .savings-percent-ring {
+    width: 90px;
+    height: 90px;
+  }
+}

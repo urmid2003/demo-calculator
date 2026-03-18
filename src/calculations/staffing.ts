@@ -14,13 +14,9 @@ export const STAFFING_CONSTANTS = {
   // Market Agency Fee per hire (12% of 8L CTC)
   MARKET_AGENCY_FEE_PER_HIRE: 96000,
   
-  // Skillbrew Costs
-  SKILLBREW_JOB_POSTING_FREE_LIMIT: 10,
-  SKILLBREW_JOB_POSTING_COST_EXTRA: 100,
-  
-  SKILLBREW_RESUME_SHORTLIST_FREE_LIMIT_PER_JOB: 50,
-  SKILLBREW_RESUME_SHORTLIST_COST_EXTRA: 10,
-  
+  // Skillbrew Costs (consistent across all tabs)
+  SKILLBREW_JOB_POSTING_COST: 0,        // Free
+  SKILLBREW_RESUME_SHORTLIST_COST: 0,    // Free
   SKILLBREW_ASSESSMENT_COST: 30,
   SKILLBREW_INTERVIEW_COST: 70,
 
@@ -82,24 +78,17 @@ export function calculateStaffingROI(inputs: StaffingInputs): StaffingResults {
   const additionalClosures = Math.round(successfulClosures * C.SKILLBREW_CLOSURE_IMPROVEMENT_PERCENTAGE);
   const skillbrewRevenue = (successfulClosures + additionalClosures) * C.MARKET_AGENCY_FEE_PER_HIRE;
 
-  // Job Posting Cost
-  const billableJobs = Math.max(0, jobsPosted - C.SKILLBREW_JOB_POSTING_FREE_LIMIT);
-  let skillbrewJobPostingCost = billableJobs * C.SKILLBREW_JOB_POSTING_COST_EXTRA;
+  // Job Posting Cost — Free with Skillbrew
+  const skillbrewJobPostingCost = C.SKILLBREW_JOB_POSTING_COST;
 
-  // Screening / Resume Shortlisting Cost
-  // Total resumes to shortlist is totalCandidates.
-  // Free limit is 50 PER JOB.
-  const freeShortlists = jobsPosted * C.SKILLBREW_RESUME_SHORTLIST_FREE_LIMIT_PER_JOB;
-  const billableShortlists = Math.max(0, totalCandidates - freeShortlists);
-  const skillbrewShortlistCost = billableShortlists * C.SKILLBREW_RESUME_SHORTLIST_COST_EXTRA;
-
-  // Additional Skillbrew costs replacing manual interviewing/assessments
+  // Screening / Resume Shortlisting — Free with Skillbrew
+  // Only assessment and interview costs apply
   const skillbrewAssessmentCost = totalCandidates * C.SKILLBREW_ASSESSMENT_COST;
-  let skillbrewInterviewCandidates = Math.ceil(totalCandidates * 0.2); // assume 20% make it to interview
+  const skillbrewInterviewCandidates = Math.ceil(totalCandidates * 0.2); // assume 20% make it to interview
   const skillbrewInterviewCost = skillbrewInterviewCandidates * C.SKILLBREW_INTERVIEW_COST;
   
   // Total Skillbrew 'Screening & Eval' cost
-  const skillbrewScreeningEvalCost = skillbrewShortlistCost + skillbrewAssessmentCost + skillbrewInterviewCost;
+  const skillbrewScreeningEvalCost = skillbrewAssessmentCost + skillbrewInterviewCost;
   
   // Skillbrew Time tracking
   const skillbrewScreeningHours = totalRecruiterHoursMonthly * C.SKILLBREW_SCREENING_TIME_PERCENTAGE;
