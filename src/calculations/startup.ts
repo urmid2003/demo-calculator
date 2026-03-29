@@ -58,7 +58,8 @@ export interface StartupInputs {
   founderHoursPerHire: number;     // hours founder/team spends per hire
   founderHourlyValue: number;      // opportunity cost per hour (₹)
   jobPostingBudget: number;        // annual budget for job portals (₹)
-  toolSubscriptions: number;       // annual ATS/assessment tool spend (₹)
+  filteringToolCost: number;       // annual ATS/filtering tool spend (₹)
+  screeningToolCost: number;       // annual assessment/screening tool spend (₹)
 }
 
 export interface StartupResults {
@@ -81,7 +82,8 @@ export function calculateStartupROI(inputs: StartupInputs): StartupResults {
     founderHoursPerHire,
     founderHourlyValue,
     jobPostingBudget,
-    toolSubscriptions,
+    filteringToolCost,
+    screeningToolCost,
   } = inputs;
   const C = STARTUP_CONSTANTS;
 
@@ -95,7 +97,7 @@ export function calculateStartupROI(inputs: StartupInputs): StartupResults {
     C.BGV_COST_PER_HIRE + C.ASSESSMENT_TOOLS_PER_HIRE + C.ONBOARDING_COST_PER_HIRE;
   const directHiringCost = hiresPlanned * directCostPerHire;
 
-  const totalCostCurrent = founderTimeCostCurrent + directHiringCost + jobPostingBudget + toolSubscriptions;
+  const totalCostCurrent = founderTimeCostCurrent + directHiringCost + jobPostingBudget + filteringToolCost + screeningToolCost;
 
   // ──── SKILLBREW COST ────
   const totalCandidates = hiresPlanned * C.CANDIDATES_PER_ROLE;
@@ -138,7 +140,7 @@ export function calculateStartupROI(inputs: StartupInputs): StartupResults {
     : 0;
 
   // Tool costs eliminated = job portal budget + tool subscriptions
-  const toolCostEliminated = jobPostingBudget + toolSubscriptions;
+  const toolCostEliminated = jobPostingBudget + filteringToolCost + screeningToolCost;
 
   return {
     totalCostCurrent,

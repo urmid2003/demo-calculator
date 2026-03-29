@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { calculateStaffingROI, StaffingInputs } from '../calculations/staffing';
+import { SliderField } from './SliderField';
+import { FeatureAnimatedCard } from './FeatureAnimatedCard';
 import { Info, IndianRupee, Timer, TrendingUp, Users } from 'lucide-react';
 import { motion, useSpring, useTransform } from 'framer-motion';
 import {
@@ -16,6 +18,10 @@ import {
 
 // Formatter to handle lacs/lakhs format
 const formatLacs = (val: number, prefix = '') => {
+  if (val >= 10000000) {
+    const crores = val / 10000000;
+    return `${prefix}${parseFloat(crores.toFixed(2))}Cr`;
+  }
   if (val >= 100000) {
     const lacs = val / 100000;
     // Replace trailing .0 if present -> 5.3 L
@@ -75,10 +81,11 @@ const renderLegendText = (value: string, entry: any) => {
 };
 
 export const ForStaffing: React.FC = () => {
+  const savedRecruiters = localStorage.getItem('skillbrew_staffing_recruiters');
   const [inputs, setInputs] = useState<StaffingInputs>({
-    jobsPosted: 10,
-    recruitersOnTeam: 3,
-    successfulClosures: 5,
+    jobsPosted: 120,
+    recruitersOnTeam: savedRecruiters ? Number(savedRecruiters) : 3,
+    successfulClosures: 60,
     candidatesPerRole: 50,
   });
 
@@ -88,7 +95,7 @@ export const ForStaffing: React.FC = () => {
     setInputs(prev => ({ ...prev, [key]: Number(e.target.value) }));
   };
 
-  // Prepare data array for Recharts
+  // Prepare data array for Recharts (Annualized natively via inputs)
   const chartData = [
     {
       name: 'Revenue',
@@ -111,57 +118,28 @@ export const ForStaffing: React.FC = () => {
     <div className="grid-layout">
       {/* Left Column: Sliders */}
       <aside className="sidebar">
-        <div className="slider-group">
-          <div className="slider-label">
-            <span>Jobs posted (per month)</span>
-            <span className="slider-value">{inputs.jobsPosted}</span>
-          </div>
-          <input 
-            type="range" 
-            min="1" max="100" 
-            value={inputs.jobsPosted} 
-            onChange={(e) => handleSliderChange(e, 'jobsPosted')} 
-          />
-        </div>
-
-        <div className="slider-group">
-          <div className="slider-label">
-            <span>Recruiters on team (active hiring)</span>
-            <span className="slider-value">{inputs.recruitersOnTeam}</span>
-          </div>
-          <input 
-            type="range" 
-            min="1" max="50" 
-            value={inputs.recruitersOnTeam} 
-            onChange={(e) => handleSliderChange(e, 'recruitersOnTeam')} 
-          />
-        </div>
-
-        <div className="slider-group">
-          <div className="slider-label">
-            <span>Successful closures (placement/month)</span>
-            <span className="slider-value">{inputs.successfulClosures}</span>
-          </div>
-          <input 
-            type="range" 
-            min="1" max="50" 
-            value={inputs.successfulClosures} 
-            onChange={(e) => handleSliderChange(e, 'successfulClosures')} 
-          />
-        </div>
-
-        <div className="slider-group" style={{ marginBottom: 0 }}>
-          <div className="slider-label">
-            <span>Candidates per role (screening before shortlisting)</span>
-            <span className="slider-value">{inputs.candidatesPerRole}</span>
-          </div>
-          <input 
-            type="range" 
-            min="10" max="500" step="10"
-            value={inputs.candidatesPerRole} 
-            onChange={(e) => handleSliderChange(e, 'candidatesPerRole')} 
-          />
-        </div>
+        <SliderField
+          label="Jobs posted (Annual)"
+          value={inputs.jobsPosted}
+          min={0} max={1000} step={10}
+          onChange={(e) => handleSliderChange(e, 'jobsPosted')}
+          formatMark={formatLacs}
+        />
+        <SliderField
+          label="Successful closures (Annual)"
+          value={inputs.successfulClosures}
+          min={0} max={500} step={10}
+          onChange={(e) => handleSliderChange(e, 'successfulClosures')}
+          formatMark={formatLacs}
+        />
+        <SliderField
+          label="Candidates per role (screening before shortlisting)"
+          value={inputs.candidatesPerRole}
+          min={0} max={1000} step={10}
+          onChange={(e) => handleSliderChange(e, 'candidatesPerRole')}
+          formatMark={formatLacs}
+        />
+        <FeatureAnimatedCard />
       </aside>
 
       {/* Right Column: Chart & Tickets */}
@@ -174,8 +152,8 @@ export const ForStaffing: React.FC = () => {
               Cost & Revenue Comparison
               <div className="info-icon">
                 <Info size={18} />
-                <div className="info-tooltip">
-                  Market data assumes current averages based on standard ATS usage, manual screening taking 40% of time, and portal fees. Skillbrew math reflects our optimized intelligence suite.
+                <div className="info-tooltip glassy-blue" style={{ width: '280px', textAlign: 'center', fontWeight: '500', fontSize: '0.85rem', lineHeight: '1.4', padding: '12px' }}>
+                  Market data assumes current averages based on standard ATS usage, manual screening taking 40% of time, and portal fees. <strong style={{ color: 'var(--primary-blue)' }}>Skillbrew math reflects our optimized intelligence suite.</strong>
                 </div>
               </div>
             </h3>
@@ -241,7 +219,7 @@ export const ForStaffing: React.FC = () => {
               <IndianRupee size={24} />
             </div>
             <div className="ticket-content">
-              <div className="ticket-title">Increased Revenue</div>
+              <div className="ticket-title">Increased Annual Revenue</div>
               <div className="ticket-value green">
                 <AnimatedNumber value={results.tickets.increasedRevenue} prefix="₹" isCurrency={true} />
               </div>
@@ -253,7 +231,7 @@ export const ForStaffing: React.FC = () => {
               <Timer size={24} />
             </div>
             <div className="ticket-content">
-              <div className="ticket-title">Filtering Hours Saved</div>
+              <div className="ticket-title">Annual Filtering Hours Saved</div>
               <div className="ticket-value blue">
                 <AnimatedNumber value={results.tickets.filteringHoursSaved} />
               </div>
@@ -277,7 +255,7 @@ export const ForStaffing: React.FC = () => {
               <Users size={24} />
             </div>
             <div className="ticket-content">
-              <div className="ticket-title">Hours Saved on Shortlist</div>
+              <div className="ticket-title">Annual Hours Saved on Shortlist</div>
               <div className="ticket-value blue">
                 <AnimatedNumber value={results.tickets.hoursSavedOnShortlisting} />
               </div>

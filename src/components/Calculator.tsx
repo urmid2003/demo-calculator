@@ -1,13 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ForStaffing } from './ForStaffing';
 import { ForCorporates } from './forcorporates';
 import { ForStartups } from './forstartups';
+import { LeadCapture } from './LeadCapture';
 import logo from '../Skillbrew Logo.svg';
 
 type Tab = 'staffing' | 'corporates' | 'startups';
 
 export const Calculator: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('staffing');
+  const [completedTabs, setCompletedTabs] = useState<Record<Tab, boolean>>({
+    staffing: false,
+    corporates: false,
+    startups: false
+  });
+
+  useEffect(() => {
+    const savedTabs = localStorage.getItem('skillbrew_completed_tabs');
+    if (savedTabs) {
+      try {
+        setCompletedTabs(JSON.parse(savedTabs));
+      } catch (e) {
+        console.error('Failed to parse completed tabs', e);
+      }
+    } else {
+      // Legacy fallback
+      const oldSaved = localStorage.getItem('skillbrew_lead_captured');
+      if (oldSaved === 'true') {
+        const migrated = { staffing: true, corporates: true, startups: true };
+        setCompletedTabs(migrated);
+        localStorage.setItem('skillbrew_completed_tabs', JSON.stringify(migrated));
+      }
+    }
+  }, []);
+
+  const handleLeadCaptureComplete = (data?: any) => {
+    if (data) {
+      if (data.recruiters) localStorage.setItem('skillbrew_staffing_recruiters', data.recruiters.toString());
+      if (data.hires) localStorage.setItem(`skillbrew_${activeTab}_hires`, data.hires.toString());
+      if (data.costPerHire) localStorage.setItem(`skillbrew_${activeTab}_cph`, data.costPerHire.toString());
+      if (data.externalCosts) localStorage.setItem(`skillbrew_${activeTab}_external_costs`, data.externalCosts.toString());
+    }
+    setCompletedTabs(prev => {
+      const updated = { ...prev, [activeTab]: true };
+      localStorage.setItem('skillbrew_completed_tabs', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const isCurrentTabCompleted = completedTabs[activeTab];
 
   return (
     <div className="container">
@@ -41,10 +82,16 @@ export const Calculator: React.FC = () => {
           </div>
         </nav>
 
-        <main>
-          {activeTab === 'staffing' && <ForStaffing />}
-          {activeTab === 'corporates' && <ForCorporates />}
-          {activeTab === 'startups' && <ForStartups />}
+        <main style={{ position: 'relative' }}>
+          <div className={!isCurrentTabCompleted ? 'blurred-content' : ''}>
+            {activeTab === 'staffing' && <ForStaffing />}
+            {activeTab === 'corporates' && <ForCorporates />}
+            {activeTab === 'startups' && <ForStartups />}
+          </div>
+          
+          {!isCurrentTabCompleted && (
+            <LeadCapture key={activeTab} activeTab={activeTab} onComplete={handleLeadCaptureComplete} />
+          )}
         </main>
       </div>
     </div>

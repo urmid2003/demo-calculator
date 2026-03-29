@@ -61,17 +61,18 @@ export function calculateStaffingROI(inputs: StaffingInputs): StaffingResults {
   // --- CURRENT CALCULATIONS ---
   const currentRevenue = successfulClosures * C.MARKET_AGENCY_FEE_PER_HIRE;
   const currentJobPostingCost = jobsPosted * C.MARKET_JOB_POSTING;
-  
-  // Screening completely done manually. Recruiter cost dedicated to screening:
-  const totalRecruiterCost = recruitersOnTeam * C.MARKET_RECRUITER_SALARY_MONTHLY;
-  const currentScreeningCost = totalRecruiterCost * C.MARKET_SCREENING_TIME_PERCENTAGE;
 
   // Calculating total candidates processed
   const totalCandidates = jobsPosted * candidatesPerRole;
 
-  // Total screening hours currently (assuming roughly proportional to cost percentage)
+  // Total screening hours currently 
   const totalRecruiterHoursMonthly = recruitersOnTeam * C.MARKET_WORKING_DAYS_MONTH * C.MARKET_HOURS_PER_DAY;
-  const currentScreeningHours = totalRecruiterHoursMonthly * C.MARKET_SCREENING_TIME_PERCENTAGE;
+  // Based on total candidates to reflect workload volume (assuming ~24 mins or 0.4 hours per candidate manually)
+  const currentScreeningHours = totalCandidates * 0.4;
+
+  // Screening completely done manually. Cost derived from actual manual hours spent:
+  const recruiterHourlyRate = C.MARKET_RECRUITER_SALARY_MONTHLY / (C.MARKET_WORKING_DAYS_MONTH * C.MARKET_HOURS_PER_DAY);
+  const currentScreeningCost = Math.round(currentScreeningHours * recruiterHourlyRate);
 
   // --- SKILLBREW CALCULATIONS ---
   // Revenue increases due to better matching efficiency
@@ -91,7 +92,8 @@ export function calculateStaffingROI(inputs: StaffingInputs): StaffingResults {
   const skillbrewScreeningEvalCost = skillbrewAssessmentCost + skillbrewInterviewCost;
   
   // Skillbrew Time tracking
-  const skillbrewScreeningHours = totalRecruiterHoursMonthly * C.SKILLBREW_SCREENING_TIME_PERCENTAGE;
+  // Reduced to ~6 mins or 0.1 hours per candidate with Skillbrew automation
+  const skillbrewScreeningHours = totalCandidates * 0.1;
 
   // --- TICKET CALCULATIONS ---
   const increasedRevenue = skillbrewRevenue - currentRevenue;

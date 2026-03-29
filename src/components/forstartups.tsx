@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { calculateStartupROI, StartupInputs } from '../calculations/startup';
+import { SliderField } from './SliderField';
+import { FeatureAnimatedCard } from './FeatureAnimatedCard';
 import { IndianRupee, Clock, TrendingDown, ShieldCheck, Wallet, Info } from 'lucide-react';
 import { motion, useSpring, useTransform } from 'framer-motion';
 
 // Formatter to handle lacs/lakhs format
 const formatLacs = (val: number, prefix = '') => {
+  if (val >= 10000000) {
+    const crores = val / 10000000;
+    return `${prefix}${parseFloat(crores.toFixed(2))}Cr`;
+  }
   if (val >= 100000) {
     const lacs = val / 100000;
+    // Replace trailing .0 if present -> 5.3 L
     return `${prefix}${lacs.toFixed(1).replace(/\.0$/, '')}L`;
   }
   if (val >= 1000) {
@@ -35,12 +42,16 @@ const AnimatedNumber: React.FC<{ value: number; prefix?: string; suffix?: string
 };
 
 export const ForStartups: React.FC = () => {
+  const savedHires = localStorage.getItem('skillbrew_startups_hires');
+  const savedExternal = localStorage.getItem('skillbrew_startups_external_costs');
+
   const [inputs, setInputs] = useState<StartupInputs>({
-    hiresPlanned: 6,
+    hiresPlanned: savedHires ? Number(savedHires) : 6,
     founderHoursPerHire: 30,
     founderHourlyValue: 1000,
-    jobPostingBudget: 40000,
-    toolSubscriptions: 25000,
+    jobPostingBudget: savedExternal ? Number(savedExternal) : 40000,
+    filteringToolCost: 20000,
+    screeningToolCost: 15000,
   });
 
   const results = calculateStartupROI(inputs);
@@ -53,70 +64,23 @@ export const ForStartups: React.FC = () => {
     <div className="grid-layout">
       {/* Left Column: Sliders */}
       <aside className="sidebar">
-        <div className="slider-group">
-          <div className="slider-label">
-            <span>Hires planned this year</span>
-            <span className="slider-value">{inputs.hiresPlanned}</span>
-          </div>
-          <input
-            type="range"
-            min="1" max="30"
-            value={inputs.hiresPlanned}
-            onChange={(e) => handleSliderChange(e, 'hiresPlanned')}
-          />
-        </div>
-
-        <div className="slider-group">
-          <div className="slider-label">
-            <span>Founder hours per hire</span>
-            <span className="slider-value">{inputs.founderHoursPerHire} hrs</span>
-          </div>
-          <input
-            type="range"
-            min="5" max="60"
-            value={inputs.founderHoursPerHire}
-            onChange={(e) => handleSliderChange(e, 'founderHoursPerHire')}
-          />
-        </div>
-
-        <div className="slider-group">
-          <div className="slider-label">
-            <span>Founder hourly value (₹)</span>
-            <span className="slider-value">{formatCurrency(inputs.founderHourlyValue)}</span>
-          </div>
-          <input
-            type="range"
-            min="200" max="5000" step="100"
-            value={inputs.founderHourlyValue}
-            onChange={(e) => handleSliderChange(e, 'founderHourlyValue')}
-          />
-        </div>
-
-        <div className="slider-group">
-          <div className="slider-label">
-            <span>Job posting budget (annual)</span>
-            <span className="slider-value">{formatCurrency(inputs.jobPostingBudget)}</span>
-          </div>
-          <input
-            type="range"
-            min="0" max="200000" step="5000"
-            value={inputs.jobPostingBudget}
-            onChange={(e) => handleSliderChange(e, 'jobPostingBudget')}
-          />
-        </div>
-
-        <div className="slider-group" style={{ marginBottom: 0 }}>
-          <div className="slider-label">
-            <span>Tool subscriptions (annual)</span>
-            <span className="slider-value">{formatCurrency(inputs.toolSubscriptions)}</span>
-          </div>
-          <input
-            type="range"
-            min="0" max="200000" step="5000"
-            value={inputs.toolSubscriptions}
-            onChange={(e) => handleSliderChange(e, 'toolSubscriptions')}
-          />
-        </div>
+        <SliderField
+          label="Filtering tool cost (annual)"
+          value={inputs.filteringToolCost}
+          min={0} max={200000} step={5000}
+          onChange={(e) => handleSliderChange(e, 'filteringToolCost')}
+          formatValue={formatCurrency}
+          formatMark={(v) => formatLacs(v, '₹')}
+        />
+        <SliderField
+          label="Screening tool cost (annual)"
+          value={inputs.screeningToolCost}
+          min={0} max={200000} step={5000}
+          onChange={(e) => handleSliderChange(e, 'screeningToolCost')}
+          formatValue={formatCurrency}
+          formatMark={(v) => formatLacs(v, '₹')}
+        />
+        <FeatureAnimatedCard />
       </aside>
 
       {/* Right Column: Savings Hero + Tickets */}
