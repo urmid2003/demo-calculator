@@ -82,11 +82,17 @@ const renderLegendText = (value: string, entry: any) => {
 
 export const ForStaffing: React.FC = () => {
   const savedRecruiters = localStorage.getItem('skillbrew_staffing_recruiters');
+  const savedHires = localStorage.getItem('skillbrew_staffing_hires');
+  const savedInternal = localStorage.getItem('skillbrew_staffing_internal_costs');
+  const savedExternal = localStorage.getItem('skillbrew_staffing_external_costs');
+
   const [inputs, setInputs] = useState<StaffingInputs>({
-    jobsPosted: 120,
+    jobsPosted: savedHires ? Number(savedHires) * 1.5 : 120,
     recruitersOnTeam: savedRecruiters ? Number(savedRecruiters) : 3,
-    successfulClosures: 60,
+    successfulClosures: savedHires ? Number(savedHires) : 60,
     candidatesPerRole: 50,
+    baseInternalCost: savedInternal ? Number(savedInternal) : undefined,
+    baseExternalCost: savedExternal ? Number(savedExternal) : undefined,
   });
 
   const results = calculateStaffingROI(inputs);

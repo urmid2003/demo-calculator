@@ -40,6 +40,7 @@ export const Calculator: React.FC = () => {
       if (data.hires) localStorage.setItem(`skillbrew_${activeTab}_hires`, data.hires.toString());
       if (data.costPerHire) localStorage.setItem(`skillbrew_${activeTab}_cph`, data.costPerHire.toString());
       if (data.externalCosts) localStorage.setItem(`skillbrew_${activeTab}_external_costs`, data.externalCosts.toString());
+      if (data.internalCosts) localStorage.setItem(`skillbrew_${activeTab}_internal_costs`, data.internalCosts.toString());
     }
     setCompletedTabs(prev => {
       const updated = { ...prev, [activeTab]: true };
@@ -84,9 +85,9 @@ export const Calculator: React.FC = () => {
 
         <main style={{ position: 'relative' }}>
           <div className={!isCurrentTabCompleted ? 'blurred-content' : ''}>
-            {activeTab === 'staffing' && <ForStaffing />}
-            {activeTab === 'corporates' && <ForCorporates />}
-            {activeTab === 'startups' && <ForStartups />}
+            {activeTab === 'staffing' && <ForStaffing key={String(completedTabs.staffing)} />}
+            {activeTab === 'corporates' && <ForCorporates key={String(completedTabs.corporates)} />}
+            {activeTab === 'startups' && <ForStartups key={String(completedTabs.startups)} />}
           </div>
           
           {!isCurrentTabCompleted && (

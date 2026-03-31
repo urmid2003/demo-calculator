@@ -38,7 +38,7 @@ export const LeadCapture: React.FC<LeadCaptureProps> = ({ onComplete, activeTab 
     e.preventDefault();
     if (email.trim()) {
       if (isStaffing) {
-        onComplete({ recruiters });
+        onComplete({ recruiters, hires, internalCosts, externalCosts, costPerHire });
       } else {
         onComplete({ hires, internalCosts, externalCosts, costPerHire });
       }
@@ -102,8 +102,8 @@ export const LeadCapture: React.FC<LeadCaptureProps> = ({ onComplete, activeTab 
               <div className="lc-input-group">
                 <label>
                   {isStaffing 
-                    ? "Total Internal Costs (₹) (salaries, ATS, job boards)" 
-                    : "Total Internal Costs (₹) (HR salaries, ATS, training, overhead)"}
+                    ? "Total Internal Costs (₹) (salaries, ATS, etc.)" 
+                    : "Total Internal Costs (₹) (HR salaries, ATS, training, overhead, etc.)"}
                 </label>
                 <input 
                   type="number" 

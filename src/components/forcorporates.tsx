@@ -46,14 +46,27 @@ export const ForCorporates: React.FC = () => {
   const savedHires = localStorage.getItem('skillbrew_corporates_hires');
   const savedCph = localStorage.getItem('skillbrew_corporates_cph');
   const savedExternal = localStorage.getItem('skillbrew_corporates_external_costs');
+  const savedInternal = localStorage.getItem('skillbrew_corporates_internal_costs');
+
+  const initialHires = savedHires ? Number(savedHires) : 12;
+  const savedExternalNum = savedExternal ? Number(savedExternal) : null;
+  const savedInternalNum = savedInternal ? Number(savedInternal) : null;
+
+  const initialFiltering = savedExternalNum !== null ? savedExternalNum * 0.3 : 90000;
+  const initialScreening = savedExternalNum !== null ? savedExternalNum * 0.2 : 60000;
+  const initialJobPosting = savedExternalNum !== null ? savedExternalNum * 0.5 : 144000;
+
+  const initialCph = savedInternalNum !== null && initialHires > 0
+    ? Math.round(savedInternalNum / initialHires)
+    : (savedCph ? Number(savedCph) : 71800);
 
   const [inputs, setInputs] = useState<CorporateInputs>({
-    positionsToFill: savedHires ? Number(savedHires) : 12,
+    positionsToFill: initialHires,
     hrTeamSize: 3,
-    costPerHire: savedCph ? Number(savedCph) : 71800,
-    filteringToolCost: 90000,
-    screeningToolCost: 60000,
-    jobPostingPremiumCost: savedExternal ? Number(savedExternal) : 144000,
+    costPerHire: initialCph,
+    filteringToolCost: initialFiltering,
+    screeningToolCost: initialScreening,
+    jobPostingPremiumCost: initialJobPosting,
   });
 
   const results = calculateCorporateROI(inputs);

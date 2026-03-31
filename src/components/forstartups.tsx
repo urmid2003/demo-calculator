@@ -44,14 +44,27 @@ const AnimatedNumber: React.FC<{ value: number; prefix?: string; suffix?: string
 export const ForStartups: React.FC = () => {
   const savedHires = localStorage.getItem('skillbrew_startups_hires');
   const savedExternal = localStorage.getItem('skillbrew_startups_external_costs');
+  const savedInternal = localStorage.getItem('skillbrew_startups_internal_costs');
+
+  const initialHires = savedHires ? Number(savedHires) : 6;
+  const savedExternalNum = savedExternal ? Number(savedExternal) : null;
+  const savedInternalNum = savedInternal ? Number(savedInternal) : null;
+
+  const initialJobPosting = savedExternalNum !== null ? savedExternalNum * 0.5 : 40000;
+  const initialFiltering = savedExternalNum !== null ? savedExternalNum * 0.3 : 20000;
+  const initialScreening = savedExternalNum !== null ? savedExternalNum * 0.2 : 15000;
+
+  const initialFounderHourly = savedInternalNum !== null && initialHires > 0
+    ? Math.round(savedInternalNum / (initialHires * 30))
+    : 1000;
 
   const [inputs, setInputs] = useState<StartupInputs>({
-    hiresPlanned: savedHires ? Number(savedHires) : 6,
+    hiresPlanned: initialHires,
     founderHoursPerHire: 30,
-    founderHourlyValue: 1000,
-    jobPostingBudget: savedExternal ? Number(savedExternal) : 40000,
-    filteringToolCost: 20000,
-    screeningToolCost: 15000,
+    founderHourlyValue: initialFounderHourly,
+    jobPostingBudget: initialJobPosting,
+    filteringToolCost: initialFiltering,
+    screeningToolCost: initialScreening,
   });
 
   const results = calculateStartupROI(inputs);
