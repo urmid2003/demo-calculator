@@ -923,3 +923,357 @@ input[type=range]::-webkit-slider-thumb:hover {
   margin-top: 2px;
 }
 
+/* ─── ROI Hiring Calculator (two columns) ─── */
+.roi-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--border-color);
+  min-height: 520px;
+}
+
+@media (max-width: 960px) {
+  .roi-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roi-col {
+  padding: 1.75rem 2rem 2rem;
+}
+
+.roi-col-current {
+  border-right: 1px solid var(--border-color);
+  background: var(--white);
+}
+
+@media (max-width: 960px) {
+  .roi-col-current {
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+}
+
+.roi-col-skillbrew {
+  position: relative;
+  background: linear-gradient(180deg, var(--light-blue-1) 0%, var(--white) 48%);
+}
+
+.roi-col-heading {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin-bottom: 1.25rem;
+}
+
+.roi-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.roi-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.roi-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.roi-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .roi-field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roi-section-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--medium-blue);
+  margin: 1.25rem 0 0.75rem;
+}
+
+.roi-table-caption {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.roi-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 0.5rem;
+}
+
+.roi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.roi-table th,
+.roi-table td {
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 0.6rem;
+  text-align: center;
+}
+
+.roi-table th:first-child,
+.roi-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  background: var(--soft-bg);
+}
+
+.roi-table-input {
+  width: 100%;
+  min-width: 72px;
+  margin: 0;
+}
+
+.roi-current-summary {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  background: var(--soft-bg);
+  border: 1px solid var(--border-color);
+}
+
+.roi-current-summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+  padding: 0.35rem 0;
+  color: var(--text-secondary);
+}
+
+.roi-current-summary-row strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.roi-current-summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border-color);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.roi-current-summary-total strong {
+  color: var(--primary-blue);
+  font-size: 1.05rem;
+}
+
+.roi-form-error {
+  color: #c62828;
+  font-size: 0.85rem;
+  margin: 0.75rem 0 0;
+}
+
+.roi-report-btn {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.roi-col-skillbrew--locked .roi-skillbrew-inner--blur {
+  filter: blur(9px);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.55;
+}
+
+.roi-skillbrew-lock-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.roi-skillbrew-lock-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary-blue);
+  margin-bottom: 0.5rem;
+}
+
+.roi-skillbrew-lock-text {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  max-width: 280px;
+  line-height: 1.45;
+}
+
+.roi-sb-facts {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--white);
+  border-radius: 10px;
+  border: 1px solid rgba(5, 85, 200, 0.12);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.roi-sb-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.roi-sb-line {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
+  padding: 0.75rem 0.85rem;
+  background: var(--white);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  font-size: 0.82rem;
+}
+
+.roi-sb-line span:first-child {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.roi-sb-line span:nth-child(2) {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.roi-sb-line strong {
+  color: var(--secondary-orange);
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+.roi-sb-totalbox {
+  padding: 1rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--light-blue-2) 0%, var(--white) 100%);
+  border: 1px solid rgba(5, 85, 200, 0.2);
+  margin-bottom: 1rem;
+}
+
+.roi-sb-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  padding: 0.35rem 0;
+}
+
+.roi-sb-highlight {
+  margin-top: 0.5rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed rgba(5, 85, 200, 0.35);
+  font-weight: 700;
+}
+
+.roi-sb-highlight strong {
+  color: var(--primary-blue);
+  font-size: 1.1rem;
+}
+
+.roi-sb-benefits {
+  margin: 0 0 1.25rem;
+  padding-left: 1.1rem;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.roi-sb-benefits li {
+  margin-bottom: 0.5rem;
+}
+
+.roi-impact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 600px) {
+  .roi-impact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roi-impact-card {
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.85rem 0.9rem;
+  box-shadow: 0 4px 14px rgba(5, 85, 200, 0.06);
+}
+
+.roi-impact-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--primary-blue);
+  margin-bottom: 0.35rem;
+}
+
+.roi-impact-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.roi-impact-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0.2rem 0;
+}
+
+.roi-impact-sub {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.roi-pdf-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.roi-pdf-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
