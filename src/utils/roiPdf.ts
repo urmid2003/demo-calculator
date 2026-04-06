@@ -240,7 +240,8 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
   const fmtCreditsInr = (credits: number, inr: number) =>
     `${credits.toLocaleString('en-IN')} C\n${formatIndianMoney(inr)}`;
 
-  const sbRows: string[][] = [
+  /** Line-item credits (footer with totals sits in the following table below Credit value). */
+  const sbRowsMain: string[][] = [
     [
       `Resume shortlist credits (${CREDIT_PER_RESUME_SHORTLIST} C per resume x positions)`,
       fmtCreditsInr(results.skillbrew.resumeShortlistCredits, results.skillbrew.resumeShortlistInr),
@@ -253,16 +254,43 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
       `Proctored interview (${CREATION_CREDITS} C + shortlisted x ${CREDIT_PER_SHORTLISTED_INTERVIEW} C per position)`,
       fmtCreditsInr(results.skillbrew.proctoredInterviewCredits, results.skillbrew.proctoredInterviewInr),
     ],
-    [
-      `Credit value (${formatIndianMoney(IN_PER_CREDIT)} per credit)`,
-      `${formatIndianMoney(IN_PER_CREDIT)} / C`,
-    ],
   ];
+
+  const sbTableCommon = {
+    theme: 'grid' as const,
+    tableWidth: CONTENT_W,
+    styles: {
+      fontSize: 7.5,
+      cellPadding: { top: 2, right: 3, bottom: 2, left: 2 },
+      textColor: TEXT,
+      overflow: 'linebreak' as const,
+    },
+    headStyles: { fillColor: BRAND, textColor: 255, fontStyle: 'bold' as const, fontSize: 8 },
+    columnStyles: {
+      0: { cellWidth: CONTENT_W * 0.5 },
+      1: { halign: 'right' as const, cellWidth: CONTENT_W * 0.5 },
+    },
+    margin: { left: MARGIN, right: MARGIN },
+  };
 
   autoTable(d, {
     startY: y,
     head: [['Line item', 'Credits / amount (Rs)']],
-    body: sbRows,
+    body: sbRowsMain,
+    ...sbTableCommon,
+  });
+  y = getFinalY(d, y) + 5;
+
+  /** Credit value row, then subtotal / discount / final in the table footer (single table = no repeated foot). */
+  autoTable(d, {
+    startY: y,
+    head: [['Line item', 'Credits / amount (Rs)']],
+    body: [
+      [
+        `Credit value (${formatIndianMoney(IN_PER_CREDIT)} per credit)`,
+        `${formatIndianMoney(IN_PER_CREDIT)} / C`,
+      ],
+    ],
     foot: [
       ['Subtotal (before discount)', formatIndianMoney(results.skillbrew.subtotalBeforeDiscountInr)],
       [
@@ -271,21 +299,8 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
       ],
       ['Final amount payable', formatIndianMoney(results.skillbrew.finalAmountInr)],
     ],
-    theme: 'grid',
-    tableWidth: CONTENT_W,
-    styles: {
-      fontSize: 7.5,
-      cellPadding: { top: 2, right: 3, bottom: 2, left: 2 },
-      textColor: TEXT,
-      overflow: 'linebreak',
-    },
-    headStyles: { fillColor: BRAND, textColor: 255, fontStyle: 'bold', fontSize: 8 },
+    ...sbTableCommon,
     footStyles: { fillColor: [255, 248, 240], textColor: TEXT, fontStyle: 'bold', fontSize: 8.5 },
-    columnStyles: {
-      0: { cellWidth: CONTENT_W * 0.5 },
-      1: { halign: 'right', cellWidth: CONTENT_W * 0.5 },
-    },
-    margin: { left: MARGIN, right: MARGIN },
   });
   y = getFinalY(d, y) + 8;
 
