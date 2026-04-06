@@ -97,7 +97,7 @@ export const RoiCalculator: React.FC = () => {
             <img src={logo} alt="Skillbrew Logo" className="header-logo" />
             <h1 className="calc-title">ROI Calculator</h1>
           </div>
-          <p style={{ color: 'var(--text-secondary)' }}>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
             See how much time and money you save with Skillbrew
           </p>
         </header>
