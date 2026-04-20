@@ -6,8 +6,9 @@ import {
   CREDIT_PER_RESUME_SHORTLIST,
   CREDIT_PER_SHORTLISTED_ASSESSMENT,
   CREDIT_PER_SHORTLISTED_INTERVIEW,
-  IN_PER_CREDIT,
-  SKILLBREW_DISCOUNT,
+  WORKING_HOURS_FOR_ANNUAL_TO_HOURLY,
+  companySizeLabel,
+  hourlyRateFromAnnualLoadedCost,
 } from '../calculations/roiHiring';
 import logoUrl from '../Skillbrew Logo.svg';
 
@@ -151,6 +152,9 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
   y += 5;
 
   const inputRows: string[][] = [
+    ['Company name', inputs.companyName.trim() || 'N/A'],
+    ['Company size (employees)', companySizeLabel(inputs.companySize)],
+    ['INR per credit (from size tier)', formatIndianMoney(results.skillbrew.inrPerCredit)],
     ['Annual tech positions', String(inputs.techAnnualPositions)],
     ['Annual non-tech positions', String(inputs.nonTechAnnualPositions)],
     ['Avg resumes received per tech job', String(inputs.techResumesReceived)],
@@ -162,8 +166,16 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
     ['Expert interview hours per shortlisted resume', `${formatDecimal(inputs.expertInterviewHoursPerShortlisted)} hr`],
     ['Manager feedback hours per shortlisted resume', `${formatDecimal(inputs.feedbackManagerHoursPerShortlisted)} hr`],
     ['Job board / sourcing (annual)', formatIndianMoney(inputs.jobBoardAnnualCost)],
-    ['HR cost per hour', formatIndianMoney(inputs.hrCostPerHour)],
-    ['Manager / engineer cost per hour', formatIndianMoney(inputs.managerCostPerHour)],
+    ['HR role, annual loaded cost', formatIndianMoney(inputs.hrRoleAnnualCost)],
+    [
+      `HR effective cost per hour (annual / ${WORKING_HOURS_FOR_ANNUAL_TO_HOURLY} h)`,
+      formatIndianMoney(hourlyRateFromAnnualLoadedCost(inputs.hrRoleAnnualCost)),
+    ],
+    ['Manager / engineer, annual loaded cost', formatIndianMoney(inputs.managerRoleAnnualCost)],
+    [
+      `Manager effective cost per hour (annual / ${WORKING_HOURS_FOR_ANNUAL_TO_HOURLY} h)`,
+      formatIndianMoney(hourlyRateFromAnnualLoadedCost(inputs.managerRoleAnnualCost)),
+    ],
   ];
 
   autoTable(d, {
@@ -235,7 +247,7 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
   doc.text('Skillbrew pricing breakdown', MARGIN, y);
   y += 5;
 
-  const discountPct = Math.round(SKILLBREW_DISCOUNT * 100);
+  const discountPct = Math.round(results.skillbrew.discountRate * 100);
 
   const fmtCreditsInr = (credits: number, inr: number) =>
     `${credits.toLocaleString('en-IN')} C\n${formatIndianMoney(inr)}`;
@@ -287,8 +299,8 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
     head: [['Line item', 'Credits / amount (Rs)']],
     body: [
       [
-        `Credit value (${formatIndianMoney(IN_PER_CREDIT)} per credit)`,
-        `${formatIndianMoney(IN_PER_CREDIT)} / C`,
+        `Credit value (${formatIndianMoney(results.skillbrew.inrPerCredit)} per credit)`,
+        `${formatIndianMoney(results.skillbrew.inrPerCredit)} / C`,
       ],
     ],
     foot: [

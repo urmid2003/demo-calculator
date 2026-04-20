@@ -3,9 +3,10 @@ import { motion, useSpring, useTransform } from 'framer-motion';
 import logo from '../Skillbrew Logo.svg';
 import {
   calculateRoiHiring,
+  COMPANY_SIZE_OPTIONS,
   DEFAULT_ROI_INPUTS,
-  IN_PER_CREDIT,
   validateRoiInputs,
+  type CompanySize,
   type RoiHiringInputs,
 } from '../calculations/roiHiring';
 import { downloadRoiPdf } from '../utils/roiPdf';
@@ -74,6 +75,10 @@ export const RoiCalculator: React.FC = () => {
     setInputs((prev) => ({ ...prev, companyName: e.target.value }));
   };
 
+  const setCompanySize = (size: CompanySize) => {
+    setInputs((prev) => ({ ...prev, companySize: size }));
+  };
+
   const handleGetReport = () => {
     if (!validateRoiInputs(inputs)) {
       setFormError('Please fill every field with a valid number (annual positions cannot both be zero).');
@@ -95,7 +100,7 @@ export const RoiCalculator: React.FC = () => {
         <header className="calc-header">
           <div className="title-row">
             <img src={logo} alt="Skillbrew Logo" className="header-logo" />
-            <h1 className="calc-title">ROI Calculator</h1>
+            <h1 className="calc-title">BrewGain</h1>
           </div>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
             See how much time and money you save with Skillbrew
@@ -116,6 +121,29 @@ export const RoiCalculator: React.FC = () => {
                 onChange={setCompany}
                 autoComplete="organization"
               />
+            </div>
+
+            <div className="roi-field">
+              <span className="roi-field-label-text" id="company-size-label">
+                Company size (employees)
+              </span>
+              <div
+                className="roi-size-pills"
+                role="group"
+                aria-labelledby="company-size-label"
+              >
+                {COMPANY_SIZE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`roi-size-pill ${inputs.companySize === opt.value ? 'roi-size-pill--active' : ''}`}
+                    onClick={() => setCompanySize(opt.value)}
+                    aria-pressed={inputs.companySize === opt.value}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="roi-field-grid">
@@ -280,27 +308,29 @@ export const RoiCalculator: React.FC = () => {
             </div>
             <div className="roi-field-grid">
               <div className="roi-field">
-                <label htmlFor="hrCost">Cost of HR role (per hour)</label>
+                <label htmlFor="hrAnnual">HR role, annual loaded cost (Rs)</label>
                 <input
-                  id="hrCost"
+                  id="hrAnnual"
                   className="lc-input"
                   type="number"
                   min={0}
-                  step={10}
-                  value={inputs.hrCostPerHour || ''}
-                  onChange={setNum('hrCostPerHour')}
+                  step={10000}
+                  value={inputs.hrRoleAnnualCost || ''}
+                  onChange={setNum('hrRoleAnnualCost')}
                 />
               </div>
               <div className="roi-field">
-                <label htmlFor="mgrCost">Experienced manager / engineer (per hour)</label>
+                <label htmlFor="mgrAnnual">
+                  Experienced manager / engineer, annual loaded cost (Rs)
+                </label>
                 <input
-                  id="mgrCost"
+                  id="mgrAnnual"
                   className="lc-input"
                   type="number"
                   min={0}
-                  step={10}
-                  value={inputs.managerCostPerHour || ''}
-                  onChange={setNum('managerCostPerHour')}
+                  step={10000}
+                  value={inputs.managerRoleAnnualCost || ''}
+                  onChange={setNum('managerRoleAnnualCost')}
                 />
               </div>
             </div>
@@ -353,7 +383,7 @@ export const RoiCalculator: React.FC = () => {
 
               <ul className="roi-sb-facts">
                 <li>
-                  <strong>1 Credit = {formatInr(IN_PER_CREDIT)}</strong>
+                  <strong>1 Credit = {formatInr(results.skillbrew.inrPerCredit)}</strong>
                 </li>
                 <li>Assessment or Interview creation = 100 C</li>
               </ul>
@@ -389,7 +419,9 @@ export const RoiCalculator: React.FC = () => {
                   <strong>{formatInrCompact(results.skillbrew.subtotalBeforeDiscountInr)}</strong>
                 </div>
                 <div className="roi-sb-total-row roi-sb-highlight">
-                  <span>Final amount (70% off)</span>
+                  <span>
+                    Final amount ({Math.round(results.skillbrew.discountRate * 100)}% off)
+                  </span>
                   <strong>{formatInrCompact(results.skillbrew.finalAmountInr)}</strong>
                 </div>
               </div>

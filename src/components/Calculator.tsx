@@ -57,7 +57,7 @@ export const Calculator: React.FC = () => {
         <header className="calc-header">
           <div className="title-row">
             <img src={logo} alt="Skillbrew Logo" className="header-logo" />
-            <h1 className="calc-title">ROI Calculator</h1>
+            <h1 className="calc-title">BrewGain</h1>
           </div>
           <p style={{ color: 'var(--text-secondary)' }}>See how much time and money you save with Skillbrew</p>
         </header>

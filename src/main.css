@@ -980,6 +980,51 @@ input[type=range]::-webkit-slider-thumb:hover {
   color: var(--text-primary);
 }
 
+.roi-field-label-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.roi-size-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.15rem;
+}
+
+.roi-size-pill {
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--soft-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.roi-size-pill:hover {
+  border-color: var(--medium-blue);
+  color: var(--primary-blue);
+  background: var(--white);
+}
+
+.roi-size-pill--active {
+  background: var(--primary-blue);
+  border-color: var(--primary-blue);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(5, 85, 200, 0.22);
+}
+
+.roi-size-pill--active:hover {
+  background: #0446a3;
+  border-color: #0446a3;
+  color: var(--white);
+}
+
 .roi-hint {
   font-size: 0.75rem;
   color: var(--text-secondary);

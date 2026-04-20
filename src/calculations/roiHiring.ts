@@ -6,19 +6,73 @@
  * - First-pass resume review: recruiters often cite about 10 to 25 minutes per CV; 0.22 hr is about 13 min.
  * - Scheduling / coordination per shortlisted candidate: about 1 to 2.5 hours of back-and-forth (HR time).
  * - Hiring-manager / expert panel time per shortlisted candidate: about 2 to 4 hours interviews; feedback loops add about 1 to 2 hours.
- * - Loaded HR cost for screening TA: roughly 400 to 700 INR/hour in major Indian cities (salary + overhead / billable hours).
- * - Loaded senior IC/manager engineering rate for interviews: roughly 1,800 to 3,000 INR/hour for 25 to 45 L CTC bands.
+ * - HR and manager inputs are annual loaded cost (Rs); hourly rates use {@link WORKING_HOURS_FOR_ANNUAL_TO_HOURLY}.
+ * - Typical defaults: HR role about Rs 5 L/year, manager/engineer about Rs 10 L/year (illustrative).
  */
 
-export const IN_PER_CREDIT = 10; // 1 Credit = ₹10
+/** Hours per year used to convert annual loaded cost into an effective hourly rate (8 h x ~250 days). */
+export const WORKING_HOURS_FOR_ANNUAL_TO_HOURLY = 2000;
+
+export function hourlyRateFromAnnualLoadedCost(annualInr: number): number {
+  if (!Number.isFinite(annualInr) || annualInr <= 0) return 0;
+  return annualInr / WORKING_HOURS_FOR_ANNUAL_TO_HOURLY;
+}
+
 export const CREATION_CREDITS = 100; // Assessment or Interview creation
+
+/** Headcount band (employees). Drives INR per credit via {@link getInrPerCredit}. */
+export type CompanySize = '1-10' | '11-50' | '51-200' | '201-500' | '501-1000' | '1000+';
+
+export const COMPANY_SIZE_OPTIONS: readonly { value: CompanySize; label: string }[] = [
+  { value: '1-10', label: '1-10' },
+  { value: '11-50', label: '11-50' },
+  { value: '51-200', label: '51-200' },
+  { value: '201-500', label: '201-500' },
+  { value: '501-1000', label: '501-1,000' },
+  { value: '1000+', label: '1000+' },
+] as const;
+
+const COMPANY_SIZE_SET: ReadonlySet<string> = new Set(
+  COMPANY_SIZE_OPTIONS.map((o) => o.value)
+);
+
+/** INR charged per credit by company size (tiered pricing). */
+export function getInrPerCredit(companySize: CompanySize): number {
+  switch (companySize) {
+    case '1-10':
+    case '11-50':
+    case '51-200':
+      return 3;
+    case '201-500':
+      return 5;
+    case '501-1000':
+    case '1000+':
+      return 10;
+    default:
+      return 10;
+  }
+}
+
+export function companySizeLabel(size: CompanySize): string {
+  const found = COMPANY_SIZE_OPTIONS.find((o) => o.value === size);
+  return found?.label ?? size;
+}
 export const CREDIT_PER_RESUME_SHORTLIST = 1;
 export const CREDIT_PER_SHORTLISTED_ASSESSMENT = 10;
 export const CREDIT_PER_SHORTLISTED_INTERVIEW = 150;
-export const SKILLBREW_DISCOUNT = 0.7; // 70% off → pay 30%
+
+/**
+ * Discount by credit-value tier:
+ * - Rs 3/credit => 30% off
+ * - Rs 5 or Rs 10/credit => 50% off
+ */
+export function getSkillbrewDiscountRate(inrPerCredit: number): number {
+  return inrPerCredit === 3 ? 0.3 : 0.5;
+}
 
 export interface RoiHiringInputs {
   companyName: string;
+  companySize: CompanySize;
   techAnnualPositions: number;
   nonTechAnnualPositions: number;
   /** Avg resumes received per tech job opening */
@@ -41,13 +95,16 @@ export interface RoiHiringInputs {
   /** Manager feedback & alignment hours per shortlisted candidate (manager rate). */
   feedbackManagerHoursPerShortlisted: number;
   jobBoardAnnualCost: number;
-  hrCostPerHour: number;
-  managerCostPerHour: number;
+  /** Annual loaded cost for an HR / TA role used in shortlisting and scheduling (Rs/year). */
+  hrRoleAnnualCost: number;
+  /** Annual loaded cost for an experienced manager or engineer on interviews / feedback (Rs/year). */
+  managerRoleAnnualCost: number;
 }
 
 /** Defaults grounded in typical India SMB / mid-market hiring (see file header). */
 export const DEFAULT_ROI_INPUTS: RoiHiringInputs = {
   companyName: 'Brudite Pvt Ltd',
+  companySize: '51-200',
   techAnnualPositions: 28,
   nonTechAnnualPositions: 14,
   techResumesReceived: 118,
@@ -59,8 +116,8 @@ export const DEFAULT_ROI_INPUTS: RoiHiringInputs = {
   expertInterviewHoursPerShortlisted: 2.4,
   feedbackManagerHoursPerShortlisted: 1.1,
   jobBoardAnnualCost: 240000,
-  hrCostPerHour: 480,
-  managerCostPerHour: 2200,
+  hrRoleAnnualCost: 500000,
+  managerRoleAnnualCost: 1000000,
 };
 
 export interface CurrentCostBreakdown {
@@ -72,6 +129,10 @@ export interface CurrentCostBreakdown {
 }
 
 export interface SkillbrewCostBreakdown {
+  /** INR per credit for this company size tier. */
+  inrPerCredit: number;
+  /** Discount rate applied on subtotal for this tier (e.g. 0.3 => 30%). */
+  discountRate: number;
   resumeShortlistCredits: number;
   resumeShortlistInr: number;
   proctoredAssessmentCredits: number;
@@ -111,6 +172,7 @@ function safeNum(n: number): boolean {
 
 export function validateRoiInputs(i: RoiHiringInputs): boolean {
   if (!i.companyName || !i.companyName.trim()) return false;
+  if (!COMPANY_SIZE_SET.has(i.companySize)) return false;
   const nums: number[] = [
     i.techAnnualPositions,
     i.nonTechAnnualPositions,
@@ -123,8 +185,8 @@ export function validateRoiInputs(i: RoiHiringInputs): boolean {
     i.expertInterviewHoursPerShortlisted,
     i.feedbackManagerHoursPerShortlisted,
     i.jobBoardAnnualCost,
-    i.hrCostPerHour,
-    i.managerCostPerHour,
+    i.hrRoleAnnualCost,
+    i.managerRoleAnnualCost,
   ];
   if (!nums.every(safeNum)) return false;
   if (i.techAnnualPositions + i.nonTechAnnualPositions <= 0) return false;
@@ -132,24 +194,27 @@ export function validateRoiInputs(i: RoiHiringInputs): boolean {
 }
 
 export function calculateCurrentCosts(i: RoiHiringInputs): CurrentCostBreakdown {
+  const hrCostPerHour = hourlyRateFromAnnualLoadedCost(i.hrRoleAnnualCost);
+  const managerCostPerHour = hourlyRateFromAnnualLoadedCost(i.managerRoleAnnualCost);
+
   const resumeShortlistingCost =
     i.techResumesReceived *
       i.hrHoursPerResumeManualShortlist *
-      i.hrCostPerHour *
+      hrCostPerHour *
       i.techAnnualPositions +
     i.nonTechResumesReceived *
       i.hrHoursPerResumeManualShortlist *
-      i.hrCostPerHour *
+      hrCostPerHour *
       i.nonTechAnnualPositions;
 
   const interviewSchedulingCost =
     i.techShortlisted *
       i.interviewSchedulingHoursPerShortlisted *
-      i.hrCostPerHour *
+      hrCostPerHour *
       i.techAnnualPositions +
     i.nonTechShortlisted *
       i.interviewSchedulingHoursPerShortlisted *
-      i.hrCostPerHour *
+      hrCostPerHour *
       i.nonTechAnnualPositions;
 
   const managerHoursPerShortlisted =
@@ -158,11 +223,11 @@ export function calculateCurrentCosts(i: RoiHiringInputs): CurrentCostBreakdown 
   const interviewAndFeedbackCost =
     i.techShortlisted *
       managerHoursPerShortlisted *
-      i.managerCostPerHour *
+      managerCostPerHour *
       i.techAnnualPositions +
     i.nonTechShortlisted *
       managerHoursPerShortlisted *
-      i.managerCostPerHour *
+      managerCostPerHour *
       i.nonTechAnnualPositions;
 
   const additionalCost = i.jobBoardAnnualCost;
@@ -183,6 +248,9 @@ export function calculateCurrentCosts(i: RoiHiringInputs): CurrentCostBreakdown 
 }
 
 export function calculateSkillbrewCosts(i: RoiHiringInputs): SkillbrewCostBreakdown {
+  const inrPerCredit = getInrPerCredit(i.companySize);
+  const discountRate = getSkillbrewDiscountRate(inrPerCredit);
+
   const resumeShortlistCredits =
     i.techResumesReceived * CREDIT_PER_RESUME_SHORTLIST * i.techAnnualPositions +
     i.nonTechResumesReceived * CREDIT_PER_RESUME_SHORTLIST * i.nonTechAnnualPositions;
@@ -202,13 +270,15 @@ export function calculateSkillbrewCosts(i: RoiHiringInputs): SkillbrewCostBreakd
   const totalCredits =
     resumeShortlistCredits + proctoredAssessmentCredits + proctoredInterviewCredits;
 
-  const resumeShortlistInr = resumeShortlistCredits * IN_PER_CREDIT;
-  const proctoredAssessmentInr = proctoredAssessmentCredits * IN_PER_CREDIT;
-  const proctoredInterviewInr = proctoredInterviewCredits * IN_PER_CREDIT;
-  const subtotalBeforeDiscountInr = totalCredits * IN_PER_CREDIT;
-  const finalAmountInr = subtotalBeforeDiscountInr * (1 - SKILLBREW_DISCOUNT);
+  const resumeShortlistInr = resumeShortlistCredits * inrPerCredit;
+  const proctoredAssessmentInr = proctoredAssessmentCredits * inrPerCredit;
+  const proctoredInterviewInr = proctoredInterviewCredits * inrPerCredit;
+  const subtotalBeforeDiscountInr = totalCredits * inrPerCredit;
+  const finalAmountInr = subtotalBeforeDiscountInr * (1 - discountRate);
 
   return {
+    inrPerCredit,
+    discountRate,
     resumeShortlistCredits,
     resumeShortlistInr,
     proctoredAssessmentCredits,
