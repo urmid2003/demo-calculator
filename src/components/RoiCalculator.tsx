@@ -103,7 +103,7 @@ export const RoiCalculator: React.FC = () => {
             <h1 className="calc-title">BrewGain</h1>
           </div>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-            See how much time and money you save with Skillbrew
+            See how much time and money you save with SkillBrew
           </p>
         </header>
 
