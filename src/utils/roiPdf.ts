@@ -87,10 +87,20 @@ async function loadLogoPngDataUrl(src: string): Promise<LogoRaster | null> {
   }
 }
 
-export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiringResults): Promise<void> {
+interface DownloadRoiPdfOptions {
+  modeLabel?: string;
+}
+
+export async function downloadRoiPdf(
+  inputs: RoiHiringInputs,
+  results: RoiHiringResults,
+  options: DownloadRoiPdfOptions = {}
+): Promise<void> {
   const company = inputs.companyName.trim() || 'Company';
   const generatedAt = new Date();
   const dateStr = generatedAt.toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' });
+  const modeLabel = options.modeLabel ?? 'Annually';
+  const modeLower = modeLabel.toLowerCase();
 
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const d = doc as JsPDFWithTable;
@@ -125,7 +135,7 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
   doc.setTextColor(...BRAND);
   const titleX = logoRaster ? MARGIN + logoW + 5 : MARGIN;
   const titleBaseline = y + Math.max(logoH * 0.72, 8);
-  doc.text('Hiring ROI Report', titleX, titleBaseline);
+  doc.text(`Hiring ROI Report (${modeLabel})`, titleX, titleBaseline);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
@@ -154,9 +164,10 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
   const inputRows: string[][] = [
     ['Company name', inputs.companyName.trim() || 'N/A'],
     ['Company size (employees)', companySizeLabel(inputs.companySize)],
-    ['INR per credit (from size tier)', formatIndianMoney(results.skillbrew.inrPerCredit)],
-    ['Annual tech positions', String(inputs.techAnnualPositions)],
-    ['Annual non-tech positions', String(inputs.nonTechAnnualPositions)],
+    ['Skillbrew credit value (manual)', formatIndianMoney(results.skillbrew.inrPerCredit)],
+    ['Skillbrew discount (manual)', `${formatDecimal(inputs.skillbrewDiscountPercent, 2)}%`],
+    [`${modeLabel} tech positions`, String(inputs.techAnnualPositions)],
+    [`${modeLabel} non-tech positions`, String(inputs.nonTechAnnualPositions)],
     ['Avg resumes received per tech job', String(inputs.techResumesReceived)],
     ['Avg resumes received per non-tech job', String(inputs.nonTechResumesReceived)],
     ['Avg shortlisted per tech job', String(inputs.techShortlisted)],
@@ -165,13 +176,13 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
     ['Scheduling hours per shortlisted resume', `${formatDecimal(inputs.interviewSchedulingHoursPerShortlisted)} hr`],
     ['Expert interview hours per shortlisted resume', `${formatDecimal(inputs.expertInterviewHoursPerShortlisted)} hr`],
     ['Manager feedback hours per shortlisted resume', `${formatDecimal(inputs.feedbackManagerHoursPerShortlisted)} hr`],
-    ['Job board / sourcing (annual)', formatIndianMoney(inputs.jobBoardAnnualCost)],
-    ['HR role, annual loaded cost', formatIndianMoney(inputs.hrRoleAnnualCost)],
+    [`Job board / sourcing (${modeLower})`, formatIndianMoney(inputs.jobBoardAnnualCost)],
+    [`HR role, ${modeLower} loaded cost`, formatIndianMoney(inputs.hrRoleAnnualCost)],
     [
       `HR effective cost per hour (annual / ${WORKING_HOURS_FOR_ANNUAL_TO_HOURLY} h)`,
       formatIndianMoney(hourlyRateFromAnnualLoadedCost(inputs.hrRoleAnnualCost)),
     ],
-    ['Manager / engineer, annual loaded cost', formatIndianMoney(inputs.managerRoleAnnualCost)],
+    [`Manager / engineer, ${modeLower} loaded cost`, formatIndianMoney(inputs.managerRoleAnnualCost)],
     [
       `Manager effective cost per hour (annual / ${WORKING_HOURS_FOR_ANNUAL_TO_HOURLY} h)`,
       formatIndianMoney(hourlyRateFromAnnualLoadedCost(inputs.managerRoleAnnualCost)),
@@ -219,7 +230,7 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
     startY: y,
     head: [['Line item', 'Amount (Rs)']],
     body: currentRows,
-    foot: [['Total annual cost (current)', formatIndianMoney(results.current.total)]],
+    foot: [[`Total ${modeLower} cost (current)`, formatIndianMoney(results.current.total)]],
     theme: 'grid',
     tableWidth: CONTENT_W,
     styles: {
@@ -299,7 +310,7 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
     head: [['Line item', 'Credits / amount (Rs)']],
     body: [
       [
-        `Credit value (${formatIndianMoney(results.skillbrew.inrPerCredit)} per credit)`,
+        `Credit value (${formatIndianMoney(results.skillbrew.inrPerCredit)} per credit, manual input)`,
         `${formatIndianMoney(results.skillbrew.inrPerCredit)} / C`,
       ],
     ],
@@ -327,7 +338,7 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
 
   const impactBody: string[][] = [
     [
-      'Annual operational savings',
+      `${modeLabel} operational savings`,
       formatIndianMoney(results.impact.revenueIncreasedInr),
       'Hours saved per year',
       `${results.impact.hoursSaved.toLocaleString('en-IN')} hrs`,
@@ -369,8 +380,14 @@ export async function downloadRoiPdf(inputs: RoiHiringInputs, results: RoiHiring
     startY: y,
     head: [['Workflow', 'Estimated hours (annual)']],
     body: [
-      ['Manual process (shortlist + scheduling + expert + feedback)', formatHours(results.hours.currentTotalHours)],
-      ['Illustrative Skillbrew workflow (automated / async)', formatHours(results.hours.skillbrewEquivalentHours)],
+      [
+        `Manual process (${modeLower}: shortlist + scheduling + expert + feedback)`,
+        formatHours(results.hours.currentTotalHours),
+      ],
+      [
+        `Illustrative Skillbrew workflow (${modeLower}, automated / async)`,
+        formatHours(results.hours.skillbrewEquivalentHours),
+      ],
     ],
     theme: 'grid',
     tableWidth: CONTENT_W,

@@ -1,13 +1,5 @@
 /**
- * ROI hiring calculator: current manual process vs Skillbrew (credits).
- *
- * Benchmarks for default dummy values (India, 2024 to 2026 hiring context):
- * - Job boards / sourcing (Naukri + LinkedIn Recruiter Lite style): about 2 to 5 L/year is common for SMB teams; we use 2,40,000 INR.
- * - First-pass resume review: recruiters often cite about 10 to 25 minutes per CV; 0.22 hr is about 13 min.
- * - Scheduling / coordination per shortlisted candidate: about 1 to 2.5 hours of back-and-forth (HR time).
- * - Hiring-manager / expert panel time per shortlisted candidate: about 2 to 4 hours interviews; feedback loops add about 1 to 2 hours.
- * - HR and manager inputs are annual loaded cost (Rs); hourly rates use {@link WORKING_HOURS_FOR_ANNUAL_TO_HOURLY}.
- * - Typical defaults: HR role about Rs 5 L/year, manager/engineer about Rs 10 L/year (illustrative).
+ * ROI hiring calculator shared primitives and core calculations.
  */
 
 /** Hours per year used to convert annual loaded cost into an effective hourly rate (8 h x ~250 days). */
@@ -32,9 +24,7 @@ export const COMPANY_SIZE_OPTIONS: readonly { value: CompanySize; label: string 
   { value: '1000+', label: '1000+' },
 ] as const;
 
-const COMPANY_SIZE_SET: ReadonlySet<string> = new Set(
-  COMPANY_SIZE_OPTIONS.map((o) => o.value)
-);
+const COMPANY_SIZE_SET: ReadonlySet<string> = new Set(COMPANY_SIZE_OPTIONS.map((o) => o.value));
 
 export function companySizeLabel(size: CompanySize): string {
   const found = COMPANY_SIZE_OPTIONS.find((o) => o.value === size);
@@ -49,56 +39,20 @@ export interface RoiHiringInputs {
   companySize: CompanySize;
   techAnnualPositions: number;
   nonTechAnnualPositions: number;
-  /** Avg resumes received per tech job opening */
   techResumesReceived: number;
-  /** Avg resumes received per non-tech job opening */
   nonTechResumesReceived: number;
-  /** Avg shortlisted resumes per tech job */
   techShortlisted: number;
-  /** Avg shortlisted resumes per non-tech job */
   nonTechShortlisted: number;
-  /**
-   * Interpreted as avg HR hours spent per resume for manual shortlisting (matches formula).
-   * Typical first-pass screen: about 0.15 to 0.35 hr in India TA workflows.
-   */
   hrHoursPerResumeManualShortlist: number;
-  /** Back-and-forth scheduling hours per shortlisted candidate (HR rate applies). */
   interviewSchedulingHoursPerShortlisted: number;
-  /** Expert / panel interview hours per shortlisted candidate (manager rate). */
   expertInterviewHoursPerShortlisted: number;
-  /** Manager feedback & alignment hours per shortlisted candidate (manager rate). */
   feedbackManagerHoursPerShortlisted: number;
   jobBoardAnnualCost: number;
-  /** Annual loaded cost for an HR / TA role used in shortlisting and scheduling (Rs/year). */
   hrRoleAnnualCost: number;
-  /** Annual loaded cost for an experienced manager or engineer on interviews / feedback (Rs/year). */
   managerRoleAnnualCost: number;
-  /** Manually entered Skillbrew credit value (Rs per credit). */
   skillbrewCreditValue: number;
-  /** Manually entered Skillbrew discount percentage (0 to 100). */
   skillbrewDiscountPercent: number;
 }
-
-/** Defaults grounded in typical India SMB / mid-market hiring (see file header). */
-export const DEFAULT_ROI_INPUTS: RoiHiringInputs = {
-  companyName: 'Brudite Pvt Ltd',
-  companySize: '51-200',
-  techAnnualPositions: 28,
-  nonTechAnnualPositions: 14,
-  techResumesReceived: 118,
-  nonTechResumesReceived: 86,
-  techShortlisted: 9,
-  nonTechShortlisted: 11,
-  hrHoursPerResumeManualShortlist: 0.22,
-  interviewSchedulingHoursPerShortlisted: 1.6,
-  expertInterviewHoursPerShortlisted: 2.4,
-  feedbackManagerHoursPerShortlisted: 1.1,
-  jobBoardAnnualCost: 240000,
-  hrRoleAnnualCost: 500000,
-  managerRoleAnnualCost: 1000000,
-  skillbrewCreditValue: 3,
-  skillbrewDiscountPercent: 30,
-};
 
 export interface CurrentCostBreakdown {
   resumeShortlistingCost: number;
@@ -109,9 +63,7 @@ export interface CurrentCostBreakdown {
 }
 
 export interface SkillbrewCostBreakdown {
-  /** INR per credit for this company size tier. */
   inrPerCredit: number;
-  /** Discount rate applied on subtotal for this tier (e.g. 0.3 => 30%). */
   discountRate: number;
   resumeShortlistCredits: number;
   resumeShortlistInr: number;
@@ -124,15 +76,12 @@ export interface SkillbrewCostBreakdown {
 }
 
 export interface HourEstimates {
-  /** Total person-hours (HR + manager-weighted not applied; raw hours). */
   currentTotalHours: number;
-  /** Heuristic hours with Skillbrew (mostly async / automated). */
   skillbrewEquivalentHours: number;
   hoursSaved: number;
 }
 
 export interface ImpactMetrics {
-  /** Annual money saved vs Skillbrew final (same as revenue uplift for ops). */
   revenueIncreasedInr: number;
   hoursSaved: number;
   moreAutomationPercent: number;
@@ -150,7 +99,7 @@ function safeNum(n: number): boolean {
   return typeof n === 'number' && Number.isFinite(n) && n >= 0;
 }
 
-export function validateRoiInputs(i: RoiHiringInputs): boolean {
+export function validateRoiInputsBase(i: RoiHiringInputs): boolean {
   if (!i.companyName || !i.companyName.trim()) return false;
   if (!COMPANY_SIZE_SET.has(i.companySize)) return false;
   const nums: number[] = [
@@ -182,14 +131,8 @@ export function calculateCurrentCosts(i: RoiHiringInputs): CurrentCostBreakdown 
   const managerCostPerHour = hourlyRateFromAnnualLoadedCost(i.managerRoleAnnualCost);
 
   const resumeShortlistingCost =
-    i.techResumesReceived *
-      i.hrHoursPerResumeManualShortlist *
-      hrCostPerHour *
-      i.techAnnualPositions +
-    i.nonTechResumesReceived *
-      i.hrHoursPerResumeManualShortlist *
-      hrCostPerHour *
-      i.nonTechAnnualPositions;
+    i.techResumesReceived * i.hrHoursPerResumeManualShortlist * hrCostPerHour * i.techAnnualPositions +
+    i.nonTechResumesReceived * i.hrHoursPerResumeManualShortlist * hrCostPerHour * i.nonTechAnnualPositions;
 
   const interviewSchedulingCost =
     i.techShortlisted *
@@ -205,22 +148,13 @@ export function calculateCurrentCosts(i: RoiHiringInputs): CurrentCostBreakdown 
     i.expertInterviewHoursPerShortlisted + i.feedbackManagerHoursPerShortlisted;
 
   const interviewAndFeedbackCost =
-    i.techShortlisted *
-      managerHoursPerShortlisted *
-      managerCostPerHour *
-      i.techAnnualPositions +
-    i.nonTechShortlisted *
-      managerHoursPerShortlisted *
-      managerCostPerHour *
-      i.nonTechAnnualPositions;
+    i.techShortlisted * managerHoursPerShortlisted * managerCostPerHour * i.techAnnualPositions +
+    i.nonTechShortlisted * managerHoursPerShortlisted * managerCostPerHour * i.nonTechAnnualPositions;
 
   const additionalCost = i.jobBoardAnnualCost;
 
   const total =
-    resumeShortlistingCost +
-    interviewSchedulingCost +
-    interviewAndFeedbackCost +
-    additionalCost;
+    resumeShortlistingCost + interviewSchedulingCost + interviewAndFeedbackCost + additionalCost;
 
   return {
     resumeShortlistingCost,
@@ -240,14 +174,12 @@ export function calculateSkillbrewCosts(i: RoiHiringInputs): SkillbrewCostBreakd
     i.nonTechResumesReceived * CREDIT_PER_RESUME_SHORTLIST * i.nonTechAnnualPositions;
 
   const proctoredAssessmentCredits =
-    (CREATION_CREDITS + i.techShortlisted * CREDIT_PER_SHORTLISTED_ASSESSMENT) *
-      i.techAnnualPositions +
+    (CREATION_CREDITS + i.techShortlisted * CREDIT_PER_SHORTLISTED_ASSESSMENT) * i.techAnnualPositions +
     (CREATION_CREDITS + i.nonTechShortlisted * CREDIT_PER_SHORTLISTED_ASSESSMENT) *
       i.nonTechAnnualPositions;
 
   const proctoredInterviewCredits =
-    (CREATION_CREDITS + i.techShortlisted * CREDIT_PER_SHORTLISTED_INTERVIEW) *
-      i.techAnnualPositions +
+    (CREATION_CREDITS + i.techShortlisted * CREDIT_PER_SHORTLISTED_INTERVIEW) * i.techAnnualPositions +
     (CREATION_CREDITS + i.nonTechShortlisted * CREDIT_PER_SHORTLISTED_INTERVIEW) *
       i.nonTechAnnualPositions;
 
@@ -292,13 +224,10 @@ function estimateHours(i: RoiHiringInputs): HourEstimates {
       i.nonTechAnnualPositions;
 
   const currentTotalHours = shortlistHours + schedulingHours + expertFbHours;
-
-  // Skillbrew: heavy automation on screening, scheduling, and structured feedback; illustrative remainder.
   const skillbrewEquivalentHours = Math.min(
     currentTotalHours * 0.12,
     i.techAnnualPositions * 3 + i.nonTechAnnualPositions * 2.5
   );
-
   const hoursSaved = Math.max(0, currentTotalHours - skillbrewEquivalentHours);
 
   return { currentTotalHours, skillbrewEquivalentHours, hoursSaved };
@@ -321,7 +250,7 @@ function impactFromResults(
   };
 }
 
-export function calculateRoiHiring(i: RoiHiringInputs): RoiHiringResults {
+export function calculateRoiHiringCore(i: RoiHiringInputs): RoiHiringResults {
   const current = calculateCurrentCosts(i);
   const skillbrew = calculateSkillbrewCosts(i);
   const hours = estimateHours(i);

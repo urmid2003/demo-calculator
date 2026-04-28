@@ -2,13 +2,30 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion, useSpring, useTransform } from 'framer-motion';
 import logo from '../Skillbrew Logo.svg';
 import {
-  calculateRoiHiring,
   COMPANY_SIZE_OPTIONS,
-  DEFAULT_ROI_INPUTS,
-  validateRoiInputs,
   type CompanySize,
   type RoiHiringInputs,
 } from '../calculations/roiHiring';
+import {
+  DEFAULT_ROI_INPUTS_ANNUAL,
+  calculateRoiHiringAnnual,
+  validateRoiInputsAnnual,
+} from '../calculations/roiHiringAnnual';
+import {
+  DEFAULT_ROI_INPUTS_MONTHLY,
+  calculateRoiHiringMonthly,
+  validateRoiInputsMonthly,
+} from '../calculations/roiHiringMonthly';
+import {
+  DEFAULT_ROI_INPUTS_MANUAL,
+  DEFAULT_MANUAL_PLANNER_INPUTS,
+  calculateManualPlanner,
+  calculateRoiHiringManual,
+  type ManualPlannerInputs,
+  type ProctoringMode,
+  validateManualPlannerInputs,
+  validateRoiInputsManual,
+} from '../calculations/roiHiringManual';
 import { downloadRoiPdf } from '../utils/roiPdf';
 import { Clock, Download, IndianRupee, Target, Zap } from 'lucide-react';
 
@@ -51,37 +68,114 @@ const CountPercent: React.FC<{ value: number }> = ({ value }) => {
   return <motion.span>{display}</motion.span>;
 };
 
+type RoiMode = 'annual' | 'monthly' | 'manual';
+
+const MODE_LABEL: Record<RoiMode, string> = {
+  annual: 'Annually',
+  monthly: 'Monthly',
+  manual: 'Manual',
+};
+
 export const RoiCalculator: React.FC = () => {
-  const [inputs, setInputs] = useState<RoiHiringInputs>({ ...DEFAULT_ROI_INPUTS });
+  const [activeMode, setActiveMode] = useState<RoiMode>('annual');
+  const [modeInputs, setModeInputs] = useState<Record<RoiMode, RoiHiringInputs>>({
+    annual: { ...DEFAULT_ROI_INPUTS_ANNUAL },
+    monthly: { ...DEFAULT_ROI_INPUTS_MONTHLY },
+    manual: { ...DEFAULT_ROI_INPUTS_MANUAL },
+  });
   const [reportUnlocked, setReportUnlocked] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [manualPlannerInputs, setManualPlannerInputs] =
+    useState<ManualPlannerInputs>(DEFAULT_MANUAL_PLANNER_INPUTS);
 
-  const valid = useMemo(() => validateRoiInputs(inputs), [inputs]);
-  const results = useMemo(() => calculateRoiHiring(inputs), [inputs]);
+  const inputs = modeInputs[activeMode];
+
+  const validateActiveInputs = useMemo(() => {
+    if (activeMode === 'monthly') return validateRoiInputsMonthly;
+    if (activeMode === 'manual') return validateRoiInputsManual;
+    return validateRoiInputsAnnual;
+  }, [activeMode]);
+
+  const calculateActiveResults = useMemo(() => {
+    if (activeMode === 'monthly') return calculateRoiHiringMonthly;
+    if (activeMode === 'manual') return calculateRoiHiringManual;
+    return calculateRoiHiringAnnual;
+  }, [activeMode]);
+
+  const valid = useMemo(() => validateActiveInputs(inputs), [inputs, validateActiveInputs]);
+  const results = useMemo(() => calculateActiveResults(inputs), [inputs, calculateActiveResults]);
+  const manualPlannerValid = useMemo(
+    () => validateManualPlannerInputs(manualPlannerInputs),
+    [manualPlannerInputs]
+  );
+  const manualPlannerResults = useMemo(
+    () => calculateManualPlanner(manualPlannerInputs),
+    [manualPlannerInputs]
+  );
 
   const setNum =
     (key: keyof RoiHiringInputs) => (e: React.ChangeEvent<HTMLInputElement>) => {
       const v = e.target.value;
       if (v === '') {
-        setInputs((prev) => ({ ...prev, [key]: 0 as never }));
+        setModeInputs((prev) => ({
+          ...prev,
+          [activeMode]: { ...prev[activeMode], [key]: 0 as never },
+        }));
         return;
       }
       const n = Number(v);
       if (!Number.isFinite(n)) return;
-      setInputs((prev) => ({ ...prev, [key]: n as never }));
+      setModeInputs((prev) => ({
+        ...prev,
+        [activeMode]: { ...prev[activeMode], [key]: n as never },
+      }));
     };
 
   const setCompany = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputs((prev) => ({ ...prev, companyName: e.target.value }));
+    setModeInputs((prev) => ({
+      ...prev,
+      [activeMode]: { ...prev[activeMode], companyName: e.target.value },
+    }));
   };
 
   const setCompanySize = (size: CompanySize) => {
-    setInputs((prev) => ({ ...prev, companySize: size }));
+    setModeInputs((prev) => ({
+      ...prev,
+      [activeMode]: { ...prev[activeMode], companySize: size },
+    }));
+  };
+
+  const setManualNum =
+    (key: keyof Pick<ManualPlannerInputs, 'creditsOwned' | 'creditValue' | 'assessmentsWanted' | 'interviewsWanted'>) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const v = e.target.value;
+      if (v === '') {
+        setManualPlannerInputs((prev) => ({ ...prev, [key]: 0 }));
+        return;
+      }
+      const n = Number(v);
+      if (!Number.isFinite(n)) return;
+      setManualPlannerInputs((prev) => ({ ...prev, [key]: n }));
+    };
+
+  const setManualMode = (key: 'assessmentMode' | 'interviewMode', value: ProctoringMode) => {
+    setManualPlannerInputs((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleGetReport = () => {
-    if (!validateRoiInputs(inputs)) {
-      setFormError('Please fill every field with a valid number (annual positions cannot both be zero).');
+    if (activeMode === 'manual') {
+      if (!manualPlannerValid) {
+        setFormError(
+          'Enter valid manual values. At least one of "assessments wanted" or "interviews wanted" is required.'
+        );
+        return;
+      }
+      setFormError(null);
+      setReportUnlocked(true);
+      return;
+    }
+    if (!validateActiveInputs(inputs)) {
+      setFormError('Please fill every field with a valid number (tech + non-tech positions cannot both be zero).');
       return;
     }
     setFormError(null);
@@ -89,10 +183,17 @@ export const RoiCalculator: React.FC = () => {
   };
 
   const handleDownloadPdf = () => {
-    void downloadRoiPdf(inputs, results).catch((err) => {
+    if (activeMode === 'manual') return;
+    void downloadRoiPdf(inputs, results, { modeLabel: MODE_LABEL[activeMode] }).catch((err) => {
       console.error('PDF export failed', err);
     });
   };
+
+  const isMonthly = activeMode === 'monthly';
+  const isManual = activeMode === 'manual';
+  const periodLabel = isMonthly ? 'monthly' : activeMode === 'manual' ? 'manual' : 'annual';
+  const positionsLabel = isMonthly ? 'Monthly' : activeMode === 'manual' ? 'Manual' : 'Annual';
+  const jobBoardLabel = isMonthly ? 'monthly' : activeMode === 'manual' ? 'manual' : 'annual';
 
   return (
     <div className="container">
@@ -105,11 +206,202 @@ export const RoiCalculator: React.FC = () => {
           <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
             See how much time and money you save with SkillBrew
           </p>
+          <div className="roi-mode-tabs" role="tablist" aria-label="ROI mode">
+            {(Object.keys(MODE_LABEL) as RoiMode[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                role="tab"
+                aria-selected={activeMode === mode}
+                className={`roi-mode-tab ${activeMode === mode ? 'roi-mode-tab--active' : ''}`}
+                onClick={() => {
+                  setActiveMode(mode);
+                  setReportUnlocked(false);
+                  setFormError(null);
+                }}
+              >
+                {MODE_LABEL[mode]}
+              </button>
+            ))}
+          </div>
         </header>
 
         <div className="roi-two-col">
-          <section className="roi-col roi-col-current">
-            <h2 className="roi-col-heading">Current</h2>
+          {isManual ? (
+            <>
+              <section className="roi-col roi-col-current">
+                <h2 className="roi-col-heading">Manual Input</h2>
+
+                <div className="roi-field-grid">
+                  <div className="roi-field">
+                    <label htmlFor="manualCreditsOwned">How many credits do you have?</label>
+                    <input
+                      id="manualCreditsOwned"
+                      className="lc-input"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={manualPlannerInputs.creditsOwned || ''}
+                      onChange={setManualNum('creditsOwned')}
+                    />
+                  </div>
+                  <div className="roi-field">
+                    <label htmlFor="manualCreditValue">Credit value (Rs per credit)</label>
+                    <input
+                      id="manualCreditValue"
+                      className="lc-input"
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={manualPlannerInputs.creditValue || ''}
+                      onChange={setManualNum('creditValue')}
+                    />
+                  </div>
+                </div>
+
+                <div className="roi-field-grid">
+                  <div className="roi-field">
+                    <label htmlFor="manualAssessmentsWanted">How many assessments do you want?</label>
+                    <input
+                      id="manualAssessmentsWanted"
+                      className="lc-input"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={manualPlannerInputs.assessmentsWanted || ''}
+                      onChange={setManualNum('assessmentsWanted')}
+                    />
+                  </div>
+                  <div className="roi-field">
+                    <label htmlFor="manualInterviewsWanted">How many interviews do you want?</label>
+                    <input
+                      id="manualInterviewsWanted"
+                      className="lc-input"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={manualPlannerInputs.interviewsWanted || ''}
+                      onChange={setManualNum('interviewsWanted')}
+                    />
+                  </div>
+                </div>
+
+                <div className="roi-field-grid">
+                  <div className="roi-field">
+                    <span className="roi-field-label-text">Assessment mode</span>
+                    <div className="roi-size-pills" role="group" aria-label="Assessment proctoring mode">
+                      <button
+                        type="button"
+                        className={`roi-size-pill ${manualPlannerInputs.assessmentMode === 'proctored' ? 'roi-size-pill--active' : ''}`}
+                        onClick={() => setManualMode('assessmentMode', 'proctored')}
+                        aria-pressed={manualPlannerInputs.assessmentMode === 'proctored'}
+                      >
+                        Proctored
+                      </button>
+                      <button
+                        type="button"
+                        className={`roi-size-pill ${manualPlannerInputs.assessmentMode === 'unproctored' ? 'roi-size-pill--active' : ''}`}
+                        onClick={() => setManualMode('assessmentMode', 'unproctored')}
+                        aria-pressed={manualPlannerInputs.assessmentMode === 'unproctored'}
+                      >
+                        Unproctored
+                      </button>
+                    </div>
+                  </div>
+                  <div className="roi-field">
+                    <span className="roi-field-label-text">Interview mode</span>
+                    <div className="roi-size-pills" role="group" aria-label="Interview proctoring mode">
+                      <button
+                        type="button"
+                        className={`roi-size-pill ${manualPlannerInputs.interviewMode === 'proctored' ? 'roi-size-pill--active' : ''}`}
+                        onClick={() => setManualMode('interviewMode', 'proctored')}
+                        aria-pressed={manualPlannerInputs.interviewMode === 'proctored'}
+                      >
+                        Proctored
+                      </button>
+                      <button
+                        type="button"
+                        className={`roi-size-pill ${manualPlannerInputs.interviewMode === 'unproctored' ? 'roi-size-pill--active' : ''}`}
+                        onClick={() => setManualMode('interviewMode', 'unproctored')}
+                        aria-pressed={manualPlannerInputs.interviewMode === 'unproctored'}
+                      >
+                        Unproctored
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {formError && <p className="roi-form-error">{formError}</p>}
+                <button type="button" className="lc-button roi-report-btn" onClick={handleGetReport}>
+                  Get your report
+                </button>
+              </section>
+
+              <section
+                className={`roi-col roi-col-skillbrew ${!reportUnlocked ? 'roi-col-skillbrew--locked' : ''}`}
+                aria-hidden={!reportUnlocked}
+              >
+                {!reportUnlocked && (
+                  <div className="roi-skillbrew-lock-overlay">
+                    <p className="roi-skillbrew-lock-title">Manual details</p>
+                    <p className="roi-skillbrew-lock-text">
+                      Fill manual fields, then click <strong>Get your report</strong> to unlock this
+                      column.
+                    </p>
+                  </div>
+                )}
+
+                <div className={!reportUnlocked ? 'roi-skillbrew-inner--blur' : ''}>
+                  <h2 className="roi-col-heading">Manual Capacity Details</h2>
+                  <div className="roi-current-summary">
+                    <div className="roi-current-summary-row">
+                      <span>Total credit value</span>
+                      <strong>{formatInr(manualPlannerResults.totalBudgetValueInr)}</strong>
+                    </div>
+                    <div className="roi-current-summary-row">
+                      <span>Assessment credits per candidate</span>
+                      <strong>{manualPlannerResults.assessmentCreditsPerCandidate} C</strong>
+                    </div>
+                    <div className="roi-current-summary-row">
+                      <span>Interview credits per candidate</span>
+                      <strong>{manualPlannerResults.interviewCreditsPerCandidate} C</strong>
+                    </div>
+                    <div className="roi-current-summary-row">
+                      <span>Max candidates for assessments</span>
+                      <strong>{manualPlannerResults.maxAssessmentsFromCredits.toLocaleString('en-IN')}</strong>
+                    </div>
+                    <div className="roi-current-summary-row">
+                      <span>Max candidates for interviews</span>
+                      <strong>{manualPlannerResults.maxInterviewsFromCredits.toLocaleString('en-IN')}</strong>
+                    </div>
+                    <div className="roi-current-summary-row">
+                      <span>Credits needed for wanted assessments</span>
+                      <strong>{manualPlannerResults.assessmentCreditsNeeded.toLocaleString('en-IN')} C</strong>
+                    </div>
+                    <div className="roi-current-summary-row">
+                      <span>Credits needed for wanted interviews</span>
+                      <strong>{manualPlannerResults.interviewCreditsNeeded.toLocaleString('en-IN')} C</strong>
+                    </div>
+                    <div className="roi-current-summary-total">
+                      <span>Credits balance after planned usage</span>
+                      <strong
+                        className={
+                          manualPlannerResults.creditsBalance < 0
+                            ? 'roi-balance-negative'
+                            : 'roi-balance-positive'
+                        }
+                      >
+                        {manualPlannerResults.creditsBalance.toLocaleString('en-IN')} C
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </>
+          ) : (
+            <>
+              <section className="roi-col roi-col-current">
+                <h2 className="roi-col-heading">Current</h2>
 
             <div className="roi-field">
               <label htmlFor="company">Company name</label>
@@ -148,7 +440,7 @@ export const RoiCalculator: React.FC = () => {
 
             <div className="roi-field-grid">
               <div className="roi-field">
-                <label htmlFor="techPos">Annual tech positions</label>
+                <label htmlFor="techPos">{positionsLabel} tech positions</label>
                 <input
                   id="techPos"
                   className="lc-input"
@@ -160,7 +452,7 @@ export const RoiCalculator: React.FC = () => {
                 />
               </div>
               <div className="roi-field">
-                <label htmlFor="nonTechPos">Annual non-tech positions</label>
+                <label htmlFor="nonTechPos">{positionsLabel} non-tech positions</label>
                 <input
                   id="nonTechPos"
                   className="lc-input"
@@ -295,7 +587,7 @@ export const RoiCalculator: React.FC = () => {
 
             <p className="roi-section-label">Money</p>
             <div className="roi-field">
-              <label htmlFor="jobBoard">Job board / sourcing portal cost (annual)</label>
+              <label htmlFor="jobBoard">Job board / sourcing portal cost ({jobBoardLabel})</label>
               <input
                 id="jobBoard"
                 className="lc-input"
@@ -308,7 +600,7 @@ export const RoiCalculator: React.FC = () => {
             </div>
             <div className="roi-field-grid">
               <div className="roi-field">
-                <label htmlFor="hrAnnual">HR role, annual loaded cost (Rs)</label>
+                <label htmlFor="hrAnnual">HR role, {periodLabel} loaded cost (Rs)</label>
                 <input
                   id="hrAnnual"
                   className="lc-input"
@@ -321,7 +613,7 @@ export const RoiCalculator: React.FC = () => {
               </div>
               <div className="roi-field">
                 <label htmlFor="mgrAnnual">
-                  Experienced manager / engineer, annual loaded cost (Rs)
+                  Experienced manager / engineer, {periodLabel} loaded cost (Rs)
                 </label>
                 <input
                   id="mgrAnnual"
@@ -331,6 +623,33 @@ export const RoiCalculator: React.FC = () => {
                   step={10000}
                   value={inputs.managerRoleAnnualCost || ''}
                   onChange={setNum('managerRoleAnnualCost')}
+                />
+              </div>
+            </div>
+            <div className="roi-field-grid">
+              <div className="roi-field">
+                <label htmlFor="creditValue">Skillbrew credit value (Rs per credit)</label>
+                <input
+                  id="creditValue"
+                  className="lc-input"
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={inputs.skillbrewCreditValue || ''}
+                  onChange={setNum('skillbrewCreditValue')}
+                />
+              </div>
+              <div className="roi-field">
+                <label htmlFor="discountPercent">Skillbrew discount (%)</label>
+                <input
+                  id="discountPercent"
+                  className="lc-input"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.01}
+                  value={inputs.skillbrewDiscountPercent || ''}
+                  onChange={setNum('skillbrewDiscountPercent')}
                 />
               </div>
             </div>
@@ -353,7 +672,7 @@ export const RoiCalculator: React.FC = () => {
                 <strong>{formatInr(results.current.additionalCost)}</strong>
               </div>
               <div className="roi-current-summary-total">
-                <span>Total current annual cost</span>
+                <span>Total current {periodLabel} cost</span>
                 <strong>{formatInrCompact(results.current.total)}</strong>
               </div>
             </div>
@@ -362,12 +681,12 @@ export const RoiCalculator: React.FC = () => {
             <button type="button" className="lc-button roi-report-btn" onClick={handleGetReport}>
               Get your report
             </button>
-          </section>
+              </section>
 
-          <section
-            className={`roi-col roi-col-skillbrew ${!reportUnlocked ? 'roi-col-skillbrew--locked' : ''}`}
-            aria-hidden={!reportUnlocked}
-          >
+              <section
+                className={`roi-col roi-col-skillbrew ${!reportUnlocked ? 'roi-col-skillbrew--locked' : ''}`}
+                aria-hidden={!reportUnlocked}
+              >
             {!reportUnlocked && (
               <div className="roi-skillbrew-lock-overlay">
                 <p className="roi-skillbrew-lock-title">Skillbrew</p>
@@ -445,7 +764,7 @@ export const RoiCalculator: React.FC = () => {
                   <div className="roi-impact-value">
                     <CountInrCompact value={results.impact.revenueIncreasedInr} />
                   </div>
-                  <div className="roi-impact-sub">vs Skillbrew final (annual)</div>
+                  <div className="roi-impact-sub">vs Skillbrew final ({periodLabel})</div>
                 </div>
                 <div className="roi-impact-card">
                   <Clock className="roi-impact-icon" aria-hidden />
@@ -483,7 +802,9 @@ export const RoiCalculator: React.FC = () => {
                 Download PDF report
               </button>
             </div>
-          </section>
+              </section>
+            </>
+          )}
         </div>
       </div>
     </div>
