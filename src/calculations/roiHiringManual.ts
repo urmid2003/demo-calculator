@@ -51,8 +51,8 @@ const INTERVIEW_CREDITS_PROCTORED = 150;
 const INTERVIEW_CREDITS_UNPROCTORED = 100;
 
 export const DEFAULT_MANUAL_PLANNER_INPUTS: ManualPlannerInputs = {
-  creditsOwned: 10000,
-  creditValue: 3,
+  creditsOwned: 1000,
+  creditValue: 10,
   assessmentsWanted: 0,
   interviewsWanted: 0,
   assessmentMode: 'proctored',

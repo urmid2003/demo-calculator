@@ -299,6 +299,16 @@ body {
   margin: 0;
 }
 
+.manual-capacity-table-wrap {
+  margin-top: 1rem;
+}
+
+.manual-capacity-table td:last-child,
+.manual-capacity-table th:last-child {
+  text-align: right;
+  font-weight: 700;
+}
+
 .roi-current-summary {
   margin-top: 1.25rem;
   padding: 1rem 1.1rem;

@@ -56,11 +56,13 @@ function toMonthlyHours(h: HourEstimates): HourEstimates {
 
 export const DEFAULT_ROI_INPUTS_MONTHLY: RoiHiringInputs = {
   ...DEFAULT_ROI_INPUTS_ANNUAL,
-  techAnnualPositions: DEFAULT_ROI_INPUTS_ANNUAL.techAnnualPositions / MONTHS_IN_YEAR,
-  nonTechAnnualPositions: DEFAULT_ROI_INPUTS_ANNUAL.nonTechAnnualPositions / MONTHS_IN_YEAR,
-  jobBoardAnnualCost: DEFAULT_ROI_INPUTS_ANNUAL.jobBoardAnnualCost / MONTHS_IN_YEAR,
-  hrRoleAnnualCost: DEFAULT_ROI_INPUTS_ANNUAL.hrRoleAnnualCost / MONTHS_IN_YEAR,
-  managerRoleAnnualCost: DEFAULT_ROI_INPUTS_ANNUAL.managerRoleAnnualCost / MONTHS_IN_YEAR,
+  techAnnualPositions: Math.round(DEFAULT_ROI_INPUTS_ANNUAL.techAnnualPositions / MONTHS_IN_YEAR),
+  nonTechAnnualPositions: Math.round(
+    DEFAULT_ROI_INPUTS_ANNUAL.nonTechAnnualPositions / MONTHS_IN_YEAR
+  ),
+  jobBoardAnnualCost: Math.round(DEFAULT_ROI_INPUTS_ANNUAL.jobBoardAnnualCost / MONTHS_IN_YEAR),
+  hrRoleAnnualCost: Math.round(DEFAULT_ROI_INPUTS_ANNUAL.hrRoleAnnualCost / MONTHS_IN_YEAR),
+  managerRoleAnnualCost: Math.round(DEFAULT_ROI_INPUTS_ANNUAL.managerRoleAnnualCost / MONTHS_IN_YEAR),
 };
 
 export function validateRoiInputsMonthly(i: RoiHiringInputs): boolean {

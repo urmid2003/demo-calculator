@@ -76,6 +76,13 @@ const MODE_LABEL: Record<RoiMode, string> = {
   manual: 'Manual',
 };
 
+const MONTHLY_INTEGER_KEYS: ReadonlySet<keyof RoiHiringInputs> = new Set([
+  'techAnnualPositions',
+  'nonTechAnnualPositions',
+  'hrRoleAnnualCost',
+  'managerRoleAnnualCost',
+]);
+
 export const RoiCalculator: React.FC = () => {
   const [activeMode, setActiveMode] = useState<RoiMode>('annual');
   const [modeInputs, setModeInputs] = useState<Record<RoiMode, RoiHiringInputs>>({
@@ -125,9 +132,11 @@ export const RoiCalculator: React.FC = () => {
       }
       const n = Number(v);
       if (!Number.isFinite(n)) return;
+      const normalized =
+        activeMode === 'monthly' && MONTHLY_INTEGER_KEYS.has(key) ? Math.round(n) : n;
       setModeInputs((prev) => ({
         ...prev,
-        [activeMode]: { ...prev[activeMode], [key]: n as never },
+        [activeMode]: { ...prev[activeMode], [key]: normalized as never },
       }));
     };
 
@@ -353,47 +362,37 @@ export const RoiCalculator: React.FC = () => {
 
                 <div className={!reportUnlocked ? 'roi-skillbrew-inner--blur' : ''}>
                   <h2 className="roi-col-heading">Manual Capacity Details</h2>
-                  <div className="roi-current-summary">
-                    <div className="roi-current-summary-row">
-                      <span>Total credit value</span>
-                      <strong>{formatInr(manualPlannerResults.totalBudgetValueInr)}</strong>
-                    </div>
-                    <div className="roi-current-summary-row">
-                      <span>Assessment credits per candidate</span>
-                      <strong>{manualPlannerResults.assessmentCreditsPerCandidate} C</strong>
-                    </div>
-                    <div className="roi-current-summary-row">
-                      <span>Interview credits per candidate</span>
-                      <strong>{manualPlannerResults.interviewCreditsPerCandidate} C</strong>
-                    </div>
-                    <div className="roi-current-summary-row">
-                      <span>Max candidates for assessments</span>
-                      <strong>{manualPlannerResults.maxAssessmentsFromCredits.toLocaleString('en-IN')}</strong>
-                    </div>
-                    <div className="roi-current-summary-row">
-                      <span>Max candidates for interviews</span>
-                      <strong>{manualPlannerResults.maxInterviewsFromCredits.toLocaleString('en-IN')}</strong>
-                    </div>
-                    <div className="roi-current-summary-row">
-                      <span>Credits needed for wanted assessments</span>
-                      <strong>{manualPlannerResults.assessmentCreditsNeeded.toLocaleString('en-IN')} C</strong>
-                    </div>
-                    <div className="roi-current-summary-row">
-                      <span>Credits needed for wanted interviews</span>
-                      <strong>{manualPlannerResults.interviewCreditsNeeded.toLocaleString('en-IN')} C</strong>
-                    </div>
-                    <div className="roi-current-summary-total">
-                      <span>Credits balance after planned usage</span>
-                      <strong
-                        className={
-                          manualPlannerResults.creditsBalance < 0
-                            ? 'roi-balance-negative'
-                            : 'roi-balance-positive'
-                        }
-                      >
-                        {manualPlannerResults.creditsBalance.toLocaleString('en-IN')} C
-                      </strong>
-                    </div>
+                  <div className="roi-table-wrap manual-capacity-table-wrap">
+                    <table className="roi-table manual-capacity-table">
+                      <thead>
+                        <tr>
+                          <th>Metric</th>
+                          <th>Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Total credit value</td>
+                          <td>{formatInr(manualPlannerResults.totalBudgetValueInr)}</td>
+                        </tr>
+                        <tr>
+                          <td>Assessment credits per candidate</td>
+                          <td>{manualPlannerResults.assessmentCreditsPerCandidate} C</td>
+                        </tr>
+                        <tr>
+                          <td>Interview credits per candidate</td>
+                          <td>{manualPlannerResults.interviewCreditsPerCandidate} C</td>
+                        </tr>
+                        <tr>
+                          <td>Max candidates for assessments</td>
+                          <td>{manualPlannerResults.maxAssessmentsFromCredits.toLocaleString('en-IN')}</td>
+                        </tr>
+                        <tr>
+                          <td>Max candidates for interviews</td>
+                          <td>{manualPlannerResults.maxInterviewsFromCredits.toLocaleString('en-IN')}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </section>
