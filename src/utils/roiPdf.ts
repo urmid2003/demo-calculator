@@ -259,6 +259,7 @@ export async function downloadRoiPdf(
   y += 5;
 
   const discountPct = Math.round(results.skillbrew.discountRate * 100);
+  const hasDiscount = results.skillbrew.discountRate > 0;
 
   const fmtCreditsInr = (credits: number, inr: number) =>
     `${credits.toLocaleString('en-IN')} C\n${formatIndianMoney(inr)}`;
@@ -314,14 +315,16 @@ export async function downloadRoiPdf(
         `${formatIndianMoney(results.skillbrew.inrPerCredit)} / C`,
       ],
     ],
-    foot: [
-      ['Subtotal (before discount)', formatIndianMoney(results.skillbrew.subtotalBeforeDiscountInr)],
-      [
-        `Discount (${discountPct}% off)`,
-        `- ${formatIndianMoney(results.skillbrew.subtotalBeforeDiscountInr - results.skillbrew.finalAmountInr)}`,
-      ],
-      ['Final amount payable', formatIndianMoney(results.skillbrew.finalAmountInr)],
-    ],
+    foot: hasDiscount
+      ? [
+          ['Subtotal (before discount)', formatIndianMoney(results.skillbrew.subtotalBeforeDiscountInr)],
+          [
+            `Discount (${discountPct}% off)`,
+            `- ${formatIndianMoney(results.skillbrew.subtotalBeforeDiscountInr - results.skillbrew.finalAmountInr)}`,
+          ],
+          ['Final amount payable', formatIndianMoney(results.skillbrew.finalAmountInr)],
+        ]
+      : [['Final amount payable', formatIndianMoney(results.skillbrew.finalAmountInr)]],
     ...sbTableCommon,
     footStyles: { fillColor: [255, 248, 240], textColor: TEXT, fontStyle: 'bold', fontSize: 8.5 },
   });

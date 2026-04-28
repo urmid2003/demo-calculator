@@ -69,6 +69,7 @@ const CountPercent: React.FC<{ value: number }> = ({ value }) => {
 };
 
 type RoiMode = 'annual' | 'monthly' | 'manual';
+type DiscountMode = Extract<RoiMode, 'annual' | 'monthly'>;
 
 const MODE_LABEL: Record<RoiMode, string> = {
   annual: 'Annually',
@@ -86,12 +87,18 @@ const MONTHLY_INTEGER_KEYS: ReadonlySet<keyof RoiHiringInputs> = new Set([
 export const RoiCalculator: React.FC = () => {
   const [activeMode, setActiveMode] = useState<RoiMode>('annual');
   const [modeInputs, setModeInputs] = useState<Record<RoiMode, RoiHiringInputs>>({
-    annual: { ...DEFAULT_ROI_INPUTS_ANNUAL },
-    monthly: { ...DEFAULT_ROI_INPUTS_MONTHLY },
+    annual: { ...DEFAULT_ROI_INPUTS_ANNUAL, skillbrewDiscountPercent: 0 },
+    monthly: { ...DEFAULT_ROI_INPUTS_MONTHLY, skillbrewDiscountPercent: 0 },
     manual: { ...DEFAULT_ROI_INPUTS_MANUAL },
   });
   const [reportUnlocked, setReportUnlocked] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [discountEnabledByMode, setDiscountEnabledByMode] = useState<
+    Record<DiscountMode, boolean>
+  >({
+    annual: false,
+    monthly: false,
+  });
   const [manualPlannerInputs, setManualPlannerInputs] =
     useState<ManualPlannerInputs>(DEFAULT_MANUAL_PLANNER_INPUTS);
 
@@ -171,6 +178,19 @@ export const RoiCalculator: React.FC = () => {
     setManualPlannerInputs((prev) => ({ ...prev, [key]: value }));
   };
 
+  const setDiscountEnabled = (mode: DiscountMode, enabled: boolean) => {
+    setDiscountEnabledByMode((prev) => ({ ...prev, [mode]: enabled }));
+    if (!enabled) {
+      setModeInputs((prev) => ({
+        ...prev,
+        [mode]: {
+          ...prev[mode],
+          skillbrewDiscountPercent: 0,
+        },
+      }));
+    }
+  };
+
   const handleGetReport = () => {
     if (activeMode === 'manual') {
       if (!manualPlannerValid) {
@@ -200,6 +220,9 @@ export const RoiCalculator: React.FC = () => {
 
   const isMonthly = activeMode === 'monthly';
   const isManual = activeMode === 'manual';
+  const isDiscountMode = activeMode === 'annual' || activeMode === 'monthly';
+  const discountEnabled =
+    isDiscountMode && discountEnabledByMode[activeMode as DiscountMode];
   const periodLabel = isMonthly ? 'monthly' : activeMode === 'manual' ? 'manual' : 'annual';
   const positionsLabel = isMonthly ? 'Monthly' : activeMode === 'manual' ? 'Manual' : 'Annual';
   const jobBoardLabel = isMonthly ? 'monthly' : activeMode === 'manual' ? 'manual' : 'annual';
@@ -683,17 +706,37 @@ export const RoiCalculator: React.FC = () => {
                 />
               </div>
               <div className="roi-field">
-                <label htmlFor="discountPercent">Skillbrew discount (%)</label>
-                <input
-                  id="discountPercent"
-                  className="lc-input"
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.01}
-                  value={inputs.skillbrewDiscountPercent || ''}
-                  onChange={setNum('skillbrewDiscountPercent')}
-                />
+                <span className="roi-field-label-text">Add Skillbrew discount?</span>
+                <div className="roi-size-pills" role="group" aria-label="Add Skillbrew discount">
+                  <button
+                    type="button"
+                    className={`roi-size-pill ${discountEnabled ? 'roi-size-pill--active' : ''}`}
+                    onClick={() => setDiscountEnabled(activeMode as DiscountMode, true)}
+                    aria-pressed={discountEnabled}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    className={`roi-size-pill ${!discountEnabled ? 'roi-size-pill--active' : ''}`}
+                    onClick={() => setDiscountEnabled(activeMode as DiscountMode, false)}
+                    aria-pressed={!discountEnabled}
+                  >
+                    No
+                  </button>
+                </div>
+                {discountEnabled ? (
+                  <input
+                    id="discountPercent"
+                    className="lc-input"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.01}
+                    value={inputs.skillbrewDiscountPercent || ''}
+                    onChange={setNum('skillbrewDiscountPercent')}
+                  />
+                ) : null}
               </div>
             </div>
 
@@ -776,13 +819,17 @@ export const RoiCalculator: React.FC = () => {
               </div>
 
               <div className="roi-sb-totalbox">
-                <div className="roi-sb-total-row">
-                  <span>Total (before discount)</span>
-                  <strong>{formatInrCompact(results.skillbrew.subtotalBeforeDiscountInr)}</strong>
-                </div>
+                {results.skillbrew.discountRate > 0 && (
+                  <div className="roi-sb-total-row">
+                    <span>Total (before discount)</span>
+                    <strong>{formatInrCompact(results.skillbrew.subtotalBeforeDiscountInr)}</strong>
+                  </div>
+                )}
                 <div className="roi-sb-total-row roi-sb-highlight">
                   <span>
-                    Final amount ({Math.round(results.skillbrew.discountRate * 100)}% off)
+                    {results.skillbrew.discountRate > 0
+                      ? `Final amount (${Math.round(results.skillbrew.discountRate * 100)}% off)`
+                      : 'Final amount'}
                   </span>
                   <strong>{formatInrCompact(results.skillbrew.finalAmountInr)}</strong>
                 </div>
