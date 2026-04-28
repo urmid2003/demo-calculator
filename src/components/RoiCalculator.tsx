@@ -380,16 +380,60 @@ export const RoiCalculator: React.FC = () => {
                           <td>{manualPlannerResults.assessmentCreditsPerCandidate} C</td>
                         </tr>
                         <tr>
+                          <td>Assessment creation credits</td>
+                          <td>
+                            {manualPlannerInputs.assessmentsWanted > 0
+                              ? `${manualPlannerResults.assessmentCreationCredits} C`
+                              : '-'}
+                          </td>
+                        </tr>
+                        <tr>
                           <td>Interview credits per candidate</td>
-                          <td>{manualPlannerResults.interviewCreditsPerCandidate} C</td>
+                          <td>
+                            {manualPlannerInputs.interviewsWanted > 0
+                              ? `${manualPlannerResults.interviewCreditsPerCandidate} C`
+                              : '-'}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Interview creation credits</td>
+                          <td>
+                            {manualPlannerInputs.interviewsWanted > 0
+                              ? `${manualPlannerResults.interviewCreationCredits} C`
+                              : '-'}
+                          </td>
                         </tr>
                         <tr>
                           <td>Max candidates for assessments</td>
-                          <td>{manualPlannerResults.maxAssessmentsFromCredits.toLocaleString('en-IN')}</td>
+                          <td>
+                            {manualPlannerInputs.assessmentsWanted > 0
+                              ? manualPlannerResults.maxAssessmentsFromCredits.toLocaleString('en-IN')
+                              : '-'}
+                          </td>
                         </tr>
                         <tr>
                           <td>Max candidates for interviews</td>
-                          <td>{manualPlannerResults.maxInterviewsFromCredits.toLocaleString('en-IN')}</td>
+                          <td>
+                            {manualPlannerInputs.interviewsWanted > 0
+                              ? manualPlannerResults.maxInterviewsFromCredits.toLocaleString('en-IN')
+                              : '-'}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Total credits required (planned)</td>
+                          <td>{manualPlannerResults.totalCreditsNeeded.toLocaleString('en-IN')} C</td>
+                        </tr>
+                        <tr>
+                          <td>Credits balance after deduction</td>
+                          <td
+                            className={
+                              manualPlannerResults.creditsBalance < 0
+                                ? 'roi-balance-negative'
+                                : 'roi-balance-positive'
+                            }
+                          >
+                            {manualPlannerResults.creditsBalance.toLocaleString('en-IN')} C
+                          </td>
                         </tr>
                       </tbody>
                     </table>

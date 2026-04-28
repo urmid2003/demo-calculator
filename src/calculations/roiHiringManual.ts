@@ -36,6 +36,8 @@ export interface ManualPlannerInputs {
 export interface ManualPlannerResults {
   assessmentCreditsPerCandidate: number;
   interviewCreditsPerCandidate: number;
+  assessmentCreationCredits: number;
+  interviewCreationCredits: number;
   maxAssessmentsFromCredits: number;
   maxInterviewsFromCredits: number;
   assessmentCreditsNeeded: number;
@@ -49,6 +51,8 @@ const ASSESSMENT_CREDITS_PROCTORED = 10;
 const ASSESSMENT_CREDITS_UNPROCTORED = 6;
 const INTERVIEW_CREDITS_PROCTORED = 150;
 const INTERVIEW_CREDITS_UNPROCTORED = 100;
+const CREATION_CREDITS_PROCTORED = 100;
+const CREATION_CREDITS_UNPROCTORED = 50;
 
 export const DEFAULT_MANUAL_PLANNER_INPUTS: ManualPlannerInputs = {
   creditsOwned: 1000,
@@ -74,14 +78,26 @@ export function calculateManualPlanner(i: ManualPlannerInputs): ManualPlannerRes
       : ASSESSMENT_CREDITS_UNPROCTORED;
   const interviewCreditsPerCandidate =
     i.interviewMode === 'proctored' ? INTERVIEW_CREDITS_PROCTORED : INTERVIEW_CREDITS_UNPROCTORED;
+  const assessmentCreationCredits =
+    i.assessmentMode === 'proctored' ? CREATION_CREDITS_PROCTORED : CREATION_CREDITS_UNPROCTORED;
+  const interviewCreationCredits =
+    i.interviewMode === 'proctored' ? CREATION_CREDITS_PROCTORED : CREATION_CREDITS_UNPROCTORED;
 
   const maxAssessmentsFromCredits =
-    assessmentCreditsPerCandidate > 0 ? Math.floor(i.creditsOwned / assessmentCreditsPerCandidate) : 0;
+    assessmentCreditsPerCandidate > 0 && i.creditsOwned >= assessmentCreationCredits
+      ? Math.floor((i.creditsOwned - assessmentCreationCredits) / assessmentCreditsPerCandidate)
+      : 0;
   const maxInterviewsFromCredits =
-    interviewCreditsPerCandidate > 0 ? Math.floor(i.creditsOwned / interviewCreditsPerCandidate) : 0;
+    interviewCreditsPerCandidate > 0 && i.creditsOwned >= interviewCreationCredits
+      ? Math.floor((i.creditsOwned - interviewCreationCredits) / interviewCreditsPerCandidate)
+      : 0;
 
-  const assessmentCreditsNeeded = i.assessmentsWanted * assessmentCreditsPerCandidate;
-  const interviewCreditsNeeded = i.interviewsWanted * interviewCreditsPerCandidate;
+  const assessmentCreditsNeeded =
+    (i.assessmentsWanted > 0 ? assessmentCreationCredits : 0) +
+    i.assessmentsWanted * assessmentCreditsPerCandidate;
+  const interviewCreditsNeeded =
+    (i.interviewsWanted > 0 ? interviewCreationCredits : 0) +
+    i.interviewsWanted * interviewCreditsPerCandidate;
   const totalCreditsNeeded = assessmentCreditsNeeded + interviewCreditsNeeded;
   const creditsBalance = i.creditsOwned - totalCreditsNeeded;
   const totalBudgetValueInr = i.creditsOwned * i.creditValue;
@@ -89,6 +105,8 @@ export function calculateManualPlanner(i: ManualPlannerInputs): ManualPlannerRes
   return {
     assessmentCreditsPerCandidate,
     interviewCreditsPerCandidate,
+    assessmentCreationCredits,
+    interviewCreationCredits,
     maxAssessmentsFromCredits,
     maxInterviewsFromCredits,
     assessmentCreditsNeeded,
